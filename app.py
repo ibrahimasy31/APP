@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import io
 import re
+from streamlit_autorefresh import st_autorefresh
 import datetime as dt
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Optional
@@ -505,9 +506,9 @@ st.caption(f"Source active : **{source_label}**")
 df, quality = load_excel_all_sheets(file_bytes)
 
 # Auto-refresh uniquement en mode URL
-if import_mode == "URL (auto)" and auto_refresh:
-    time.sleep(refresh_sec)
-    st.rerun()
+# if import_mode == "URL (auto)" and auto_refresh:
+#     time.sleep(refresh_sec)
+#     st.rerun()
 
 if df.empty:
     st.error("Aucune feuille exploitable. Vérifie que chaque feuille contient au minimum 'Matière' et 'VHP'.")
@@ -795,3 +796,6 @@ with tab_export:
         )
 
 st.caption("✅ Astuce : standardise les colonnes sur toutes les feuilles. L’app calcule automatiquement VHR/Écart/Taux/Statut selon la période sélectionnée.")
+# 🔄 Auto-refresh propre (Streamlit Cloud)
+if import_mode == "URL (auto)" and auto_refresh:
+    st_autorefresh(interval=refresh_sec * 1000, key="iaid_refresh")
