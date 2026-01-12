@@ -275,33 +275,15 @@ def add_badges(df: pd.DataFrame) -> pd.DataFrame:
     out["Statut_badge"] = out["Statut_auto"].apply(badge)
     return out
 
-def style_table(df: pd.DataFrame) -> "pd.io.formats.style.Styler":
-    stl = df.style
+def style_table(df: pd.DataFrame) -> pd.DataFrame:
+    # On renvoie un dataframe "propre" (sans Styler)
+    out = df.copy()
 
-    # Écart : rouge si négatif, vert sinon
-    if "Écart" in df.columns:
-        def ec(v):
-            try:
-                v = float(v)
-            except:
-                return ""
-            if v < 0:
-                return "background-color:#FDEDEC;color:#922B21;font-weight:800;"
-            return "background-color:#E9F7EF;color:#145A32;font-weight:800;"
-        stl = stl.applymap(ec, subset=["Écart"])
+    # format % si Taux existe
+    if "Taux" in out.columns and np.issubdtype(out["Taux"].dtype, np.number):
+        out["Taux (%)"] = (out["Taux"] * 100).round(1)
 
-    # Taux (si colonne numérique)
-    if "Taux" in df.columns and np.issubdtype(df["Taux"].dtype, np.number):
-        stl = stl.format({"Taux": "{:.0%}"}).background_gradient(subset=["Taux"], cmap="RdYlGn")
-
-    if "Taux (%)" in df.columns and np.issubdtype(df["Taux (%)"].dtype, np.number):
-        stl = stl.background_gradient(subset=["Taux (%)"], cmap="RdYlGn")
-
-    stl = stl.set_table_styles([
-        {"selector": "th", "props": [("font-weight", "800"), ("background-color", "#F0F3F8")]},
-        {"selector": "td", "props": [("border", "1px solid #E6EAF2")]},
-    ])
-    return stl
+    return out
 
 # -----------------------------
 # Lecture Excel multi-feuilles
@@ -636,7 +618,15 @@ with tab_overview:
     st.write("### Avancement moyen par classe")
     g = filtered.groupby("Classe")["Taux"].mean().sort_values(ascending=False).reset_index()
     g["Taux (%)"] = (g["Taux"] * 100).round(1)
-    st.dataframe(style_table(g[["Classe","Taux (%)"]]), use_container_width=True)
+    st.dataframe(
+    g[["Classe","Taux (%)"]],
+    use_container_width=True,
+    column_config={
+        "Taux (%)": st.column_config.ProgressColumn(
+            "Taux (%)", min_value=0.0, max_value=100.0, format="%.1f"
+        )
+    }
+    )
 
     fig = px.bar(g, x="Classe", y="Taux (%)", title="Avancement moyen (%) par classe")
     fig.update_layout(height=420, margin=dict(l=10,r=10,t=60,b=10))
@@ -666,8 +656,18 @@ with tab_overview:
     )
 
     # + une version dataframe colorée (optionnel, très utile)
-    st.dataframe(style_table(top_retards[["Classe","Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]]),
-                use_container_width=True)
+    st.dataframe(
+    top_retards[["Classe","Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]],
+    use_container_width=True,
+    column_config={
+        "Taux": st.column_config.ProgressColumn("Taux", min_value=0.0, max_value=1.0, format="%.0f%%"),
+        "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
+        "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
+        "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+        "Statut_auto": st.column_config.TextColumn("Statut"),
+    }
+)
+
 
 
 # ====== PAR CLASSE ======
@@ -695,7 +695,20 @@ with tab_classes:
     synth_view["Taux (%)"] = (synth_view["Taux_moy"] * 100).round(1)
 
     show = synth_view[["Classe","Matieres","Taux (%)","VHP_total","VHR_total","Retard_h","Terminees","Non_demarre"]].copy()
-    st.dataframe(style_table(show), use_container_width=True)
+    st.dataframe(
+    show,
+    use_container_width=True,
+    column_config={
+        "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
+        "Retard_h": st.column_config.NumberColumn("Retard (h)", format="%.0f"),
+        "VHP_total": st.column_config.NumberColumn("VHP total", format="%.0f"),
+        "VHR_total": st.column_config.NumberColumn("VHR total", format="%.0f"),
+        "Matieres": st.column_config.NumberColumn("Matières", format="%d"),
+        "Terminees": st.column_config.NumberColumn("Terminées", format="%d"),
+        "Non_demarre": st.column_config.NumberColumn("Non démarré", format="%d"),
+    }
+)
+
 
     st.divider()
     st.write("### Détails classe A vs B (KPIs)")
@@ -715,8 +728,18 @@ with tab_classes:
 
     st.write("### Retards (Top 15) — Classe A")
     tA = A.sort_values("Écart").head(15)[["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]].copy()
-    tA["Taux"] = (tA["Taux"]*100).round(1).astype(str)+"%"
-    st.dataframe(tA, use_container_width=True)
+    tA["Taux (%)"] = (tA["Taux"] * 100).round(1)
+st.dataframe(
+    tA[["Matière","VHP","VHR","Écart","Taux (%)","Statut_auto","Observations"]],
+    use_container_width=True,
+    column_config={
+        "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
+        "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
+        "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
+        "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+    }
+)
+
 
     st.write("### Retards (Top 15) — Classe B")
     tB = B.sort_values("Écart").head(15)[["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]].copy()
