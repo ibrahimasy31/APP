@@ -81,9 +81,6 @@ st.markdown(
         font-weight: 700 !important;
       }
 
-      /* --- Petites légendes / captions --- */
-      .stCaption { color: #6B7280; }
-
       /* --- Bandeau IAID --- */
       .iaid-banner{
         background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 100%);
@@ -96,7 +93,6 @@ st.markdown(
       .iaid-banner .title{
         font-size: 18px;
         font-weight: 800;
-        margin: 0;
       }
       .iaid-banner .subtitle{
         font-size: 13px;
@@ -117,24 +113,31 @@ st.markdown(
         font-size: 12px;
         font-weight: 700;
       }
+
       /* --- Badges statut --- */
-    .badge{
-    display:inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 800;
-    font-size: 12px;
-    border: 1px solid #E6EAF2;
-    }
-    .badge-ok{ background:#E9F7EF; color:#145A32; }
-    .badge-warn{ background:#FEF5E7; color:#7D6608; }
-    .badge-bad{ background:#FDEDEC; color:#922B21; }
+      .badge{
+        display:inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 12px;
+        border: 1px solid #E6EAF2;
+      }
+      .badge-ok{ background:#E9F7EF; color:#145A32; }
+      .badge-warn{ background:#FEF5E7; color:#7D6608; }
+      .badge-bad{ background:#FDEDEC; color:#922B21; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-</style>
-
+st.markdown(
+    """
     <div class="iaid-banner">
       <div class="title">Département IA &amp; Ingénierie des Données (IAID)</div>
-      <div class="subtitle">Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière</div>
+      <div class="subtitle">
+        Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière
+      </div>
       <div class="iaid-badges">
         <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
         <div class="iaid-badge">KPIs • Alertes • Qualité</div>
