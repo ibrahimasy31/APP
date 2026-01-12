@@ -14,6 +14,8 @@ import re
 import datetime as dt
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Optional
+import time
+import requests
 
 import numpy as np
 import pandas as pd
@@ -386,8 +388,7 @@ def build_pdf_report(
         ]))
         story.append(t)
         story.append(Paragraph("NB : liste limitée aux 12 premières alertes (tri par écart).", Small))
-        story.append(Paragraph("Département IA & Ingénierie des Données (IAID)", H2))
-
+        
     story.append(PageBreak())
 
     # Détail par classe
@@ -434,9 +435,40 @@ st.caption("Département IA & Ingénierie des Données (IAID) — Consolidation 
 with st.sidebar:
     st.header("Import & Paramètres")
 
-    uploaded = st.file_uploader("Importer le fichier Excel (.xlsx)", type=["xlsx"])
+    # --- MODE STREAMLIT CLOUD (URL auto + upload manuel) ---
+    import_mode = st.radio("Mode d'import", ["URL (auto)", "Upload (manuel)"], index=0)
+
+    file_bytes = None
+    source_label = None
+
+    # Auto-refresh
+    st.subheader("Auto-refresh")
+    auto_refresh = st.checkbox("Rafraîchir automatiquement (URL)", value=True)
+    refresh_sec = st.slider("Intervalle (secondes)", 30, 900, 120, 30)
+
+    if import_mode == "URL (auto)":
+        st.caption("Recommandé Streamlit Cloud : lien direct vers un fichier .xlsx")
+        default_url = st.secrets.get("IAID_EXCEL_URL", "")
+        url = st.text_input("URL du fichier Excel (.xlsx)", value=default_url)
+
+        if url.strip():
+            try:
+                r = requests.get(url.strip(), timeout=30)
+                r.raise_for_status()
+                file_bytes = r.content
+                source_label = "URL"
+            except Exception as e:
+                st.error(f"Erreur téléchargement: {e}")
+
+    else:
+        uploaded = st.file_uploader("Importer le fichier Excel (.xlsx)", type=["xlsx"])
+        if uploaded is not None:
+            file_bytes = uploaded.getvalue()
+            source_label = f"Upload: {uploaded.name}"
+
     st.caption("Chaque feuille = une classe. Colonnes attendues : Matière, VHP, Oct..Mai (au minimum).")
 
+    # Période
     st.subheader("Période couverte")
     mois_min, mois_max = st.select_slider(
         "Mois (de → à)",
@@ -445,11 +477,13 @@ with st.sidebar:
     )
     mois_couverts = MOIS_COLS[MOIS_COLS.index(mois_min): MOIS_COLS.index(mois_max) + 1]
 
+    # Seuils
     st.subheader("Seuils d’alerte")
     taux_vert = st.slider("Seuil Vert (Terminé/OK)", 0.50, 1.00, float(DEFAULT_THRESHOLDS["taux_vert"]), 0.05)
     taux_orange = st.slider("Seuil Orange (Attention)", 0.10, 0.95, float(DEFAULT_THRESHOLDS["taux_orange"]), 0.05)
     ecart_critique = st.slider("Écart critique (heures)", -40, 0, int(DEFAULT_THRESHOLDS["ecart_critique"]), 1)
 
+    # Branding
     st.subheader("Branding")
     logo = st.file_uploader("Logo (PNG/JPG) pour le PDF", type=["png", "jpg", "jpeg"])
 
@@ -457,13 +491,24 @@ with st.sidebar:
     st.subheader("Export")
     export_prefix = st.text_input("Préfixe nom fichier export", value="Suivi_Classes")
 
+
 thresholds = {"taux_vert": taux_vert, "taux_orange": taux_orange, "ecart_critique": ecart_critique}
 
-if not uploaded:
-    st.info("➡️ Importe ton fichier Excel pour activer le dashboard.")
+thresholds = {"taux_vert": taux_vert, "taux_orange": taux_orange, "ecart_critique": ecart_critique}
+
+if file_bytes is None:
+    st.info("➡️ Fournis une source (URL auto via Secrets ou Upload manuel).")
     st.stop()
 
-df, quality = load_excel_all_sheets(uploaded.getvalue())
+st.caption(f"Source active : **{source_label}**")
+
+df, quality = load_excel_all_sheets(file_bytes)
+
+# Auto-refresh uniquement en mode URL
+if import_mode == "URL (auto)" and auto_refresh:
+    time.sleep(refresh_sec)
+    st.rerun()
+
 if df.empty:
     st.error("Aucune feuille exploitable. Vérifie que chaque feuille contient au minimum 'Matière' et 'VHP'.")
     if quality:
