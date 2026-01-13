@@ -570,25 +570,41 @@ st.sidebar.header("Filtres")
 # -----------------------------
 # Filtre Semestre (liste déroulante, défaut = S1)
 # -----------------------------
+# -----------------------------
+# Filtre Semestre (robuste)
+# -----------------------------
+def normalize_semestre_value(x) -> str:
+    if pd.isna(x):
+        return ""
+    s = str(x).strip().upper()
+
+    # Cas: "1" / "2"
+    if s.isdigit():
+        return f"S{int(s)}"
+
+    # Cas: "S1", "S01", "SEM1", "Semestre 1"...
+    s = s.replace("SEMESTRE", "S").replace("SEM", "S")
+    m = re.search(r"S\s*0*([1-9]\d*)", s)
+    if m:
+        return f"S{int(m.group(1))}"
+
+    return s
+
 if "Semestre" in df_period.columns:
-    semestres = (
-        df_period["Semestre"]
-        .dropna()
-        .astype(str)
-        .str.strip()
-        .unique()
-        .tolist()
-    )
-    semestres = sorted(semestres)
+    df_period["Semestre_norm"] = df_period["Semestre"].apply(normalize_semestre_value)
+else:
+    df_period["Semestre_norm"] = ""
 
-    # Index par défaut = S1 si présent
+if (df_period["Semestre_norm"] != "").any():
+    semestres = sorted([s for s in df_period["Semestre_norm"].unique().tolist() if s])
+
+    def sem_key(s):
+        m = re.search(r"(\d+)$", s)
+        return int(m.group(1)) if m else 999
+
+    semestres = sorted(semestres, key=sem_key)
     default_index = semestres.index("S1") if "S1" in semestres else 0
-
-    selected_semestre = st.sidebar.selectbox(
-        "Semestre",
-        semestres,
-        index=default_index
-    )
+    selected_semestre = st.sidebar.selectbox("Semestre", semestres, index=default_index)
 else:
     selected_semestre = None
 
@@ -613,7 +629,7 @@ filtered = df_period[
 
 # Application du filtre semestre si applicable
 if selected_semestre is not None:
-    filtered = filtered[filtered["Semestre"] == selected_semestre]
+    filtered = filtered[filtered["Semestre_norm"] == selected_semestre]
 
 
 
@@ -750,8 +766,8 @@ with tab_classes:
 
     st.divider()
     st.write("### Détails classe A vs B (KPIs)")
-    A = df_period[df_period["Classe"] == cls1].copy()
-    B = df_period[df_period["Classe"] == cls2].copy()
+    A = filtered[filtered["Classe"] == cls1].copy()
+    B = filtered[filtered["Classe"] == cls2].copy()
 
     def kpis(one: pd.DataFrame):
         return {
