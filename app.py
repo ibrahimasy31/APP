@@ -38,370 +38,116 @@ st.set_page_config(
     page_icon="📊",
 )
 
-import base64
-import streamlit as st
-
-# ============================
-# (OPTIONNEL) Logo dans le bandeau
-# Si tu as un uploader: logo_ui = st.file_uploader(...)
-# logo_uri = bytes_to_uri(logo_ui.getvalue(), logo_ui.type) if logo_ui else None
-# ============================
-def bytes_to_uri(img_bytes: bytes, mime: str = "image/png") -> str:
-    b64 = base64.b64encode(img_bytes).decode("utf-8")
-    return f"data:{mime};base64,{b64}"
-
-logo_uri = None  # Mets un data-uri si tu veux injecter le logo, sinon ça affiche un monogramme "IAID"
-
-# ============================
-# CSS GLOBAL + BANDEAU + KPI PREMIUM
-# ============================
 st.markdown(
     """
-<style>
-/* --- Variables (facile à ajuster) --- */
-:root{
-  --bg: #F6F8FC;
-  --card: #FFFFFF;
-  --border: #E6EAF2;
-  --text: #0F172A;
-  --muted: #64748B;
-  --brand1: #0B3D91;
-  --brand2: #1F6FEB;
-  --shadow: 0 12px 30px rgba(14, 30, 37, 0.10);
-  --shadow2: 0 18px 40px rgba(14, 30, 37, 0.14);
-}
+    <style>
+      /* --- Fond global --- */
+      .stApp { background: #F6F8FC; }
 
-/* --- Fond / container --- */
-.stApp{ background: var(--bg); }
-.block-container{
-  padding-top: 1.0rem;
-  padding-bottom: 2.2rem;
-}
+      /* --- Sidebar --- */
+      section[data-testid="stSidebar"] {
+        background: #FFFFFF;
+        border-right: 1px solid #E6EAF2;
+      }
 
-/* --- Sidebar --- */
-section[data-testid="stSidebar"]{
-  background: var(--card);
-  border-right: 1px solid var(--border);
-}
+      /* --- Cartes KPI (metrics) --- */
+      div[data-testid="stMetric"]{
+        background: #FFFFFF;
+        border: 1px solid #E6EAF2;
+        padding: 14px 16px;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 30, 37, 0.06);
+      }
 
-/* --- Boutons --- */
-.stDownloadButton button, .stButton button{
-  border-radius: 14px !important;
-  padding: 10px 14px !important;
-  font-weight: 800 !important;
-  border: 1px solid #D6E4FF !important;
-  background: #FFFFFF !important;
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-}
-.stDownloadButton button:hover, .stButton button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
-  background: #F7FAFF !important;
-}
+      /* --- Titres d'onglets --- */
+      button[data-baseweb="tab"]{
+        font-weight: 700 !important;
+        letter-spacing: 0.2px;
+      }
 
-/* --- Tabs --- */
-button[data-baseweb="tab"]{
-  font-weight: 900 !important;
-  letter-spacing: .2px;
-  border-radius: 14px !important;
-  padding: 10px 14px !important;
-}
-button[data-baseweb="tab"][aria-selected="true"]{
-  background: #EAF1FF !important;
-  border: 1px solid #D6E4FF !important;
-}
-button[data-baseweb="tab"]:hover{
-  background: #F1F5FF !important;
-}
+      /* --- Dataframes / tables --- */
+      div[data-testid="stDataFrame"]{
+        background: #FFFFFF;
+        border: 1px solid #E6EAF2;
+        border-radius: 18px;
+        padding: 6px;
+        box-shadow: 0 10px 24px rgba(14, 30, 37, 0.04);
+      }
 
-/* --- Dataframes --- */
-div[data-testid="stDataFrame"]{
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 6px;
-  box-shadow: 0 10px 24px rgba(14, 30, 37, 0.04);
-}
+      /* --- Boutons --- */
+      .stDownloadButton button, .stButton button{
+        border-radius: 14px !important;
+        padding: 10px 14px !important;
+        font-weight: 700 !important;
+      }
 
-/* ============================
-   BANDEAU (robuste Streamlit)
-   ============================ */
-.iaid-wrap{
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto 14px auto; /* centre */
-}
+      /* --- Bandeau IAID --- */
+      .iaid-banner{
+        background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 100%);
+        color: white;
+        padding: 16px 18px;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(14, 30, 37, 0.10);
+        margin-bottom: 14px;
+      }
+      .iaid-banner .title{
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .iaid-banner .subtitle{
+        font-size: 13px;
+        opacity: 0.95;
+        margin-top: 4px;
+      }
+      .iaid-badges{
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .iaid-badge{
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.25);
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
 
-.iaid-banner{
-  width: 100%;
-  border-radius: 20px;
-  padding: 16px 18px;
-  color: #fff;
-  background: linear-gradient(90deg, var(--brand1) 0%, var(--brand2) 100%);
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: var(--shadow);
-}
-
-.iaid-row{
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
-.iaid-logo{
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.20);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  overflow: hidden;
-}
-.iaid-logo img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 7px;
-}
-.iaid-mono{
-  font-weight: 1000;
-  letter-spacing: .6px;
-  opacity: .95;
-}
-
-.iaid-title{
-  font-size: 18px;
-  font-weight: 1000;
-  line-height: 1.15;
-  letter-spacing: .2px;
-}
-.iaid-subtitle{
-  font-size: 13px;
-  opacity: .95;
-  margin-top: 4px;
-}
-.iaid-chips{
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.iaid-chip{
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.22);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-/* Responsive banner */
-@media (max-width: 650px){
-  .iaid-row{ align-items: flex-start; }
-  .iaid-title{ font-size: 16px; }
-  .iaid-subtitle{ font-size: 12px; }
-}
-
-/* ============================
-   KPI PREMIUM (très esthétique)
-   ============================ */
-.kpi-grid{
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  margin: 10px 0 8px 0;
-}
-@media (max-width: 1200px){ .kpi-grid{ grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 700px){ .kpi-grid{ grid-template-columns: 1fr; } }
-
-.kpi-card{
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 14px 14px;
-  box-shadow: 0 10px 24px rgba(14, 30, 37, 0.06);
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-  position: relative;
-  overflow: hidden;
-}
-.kpi-card:hover{
-  transform: translateY(-2px);
-  box-shadow: var(--shadow2);
-  border-color: #D6E4FF;
-}
-
-.kpi-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-}
-.kpi-label{
-  font-size: 12px;
-  font-weight: 1000;
-  color: #334155;
-  letter-spacing: .2px;
-}
-.kpi-icon{
-  width: 36px;
-  height: 36px;
-  border-radius: 14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size: 16px;
-  font-weight: 900;
-  border: 1px solid rgba(31,111,235,0.20);
-  background: rgba(31,111,235,0.12);
-}
-
-/* valeur */
-.kpi-value{
-  margin-top: 10px;
-  font-size: 24px;
-  font-weight: 1000;
-  color: var(--text);
-  letter-spacing: .2px;
-}
-.kpi-sub{
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-/* mini-ligne colorée en haut (statut) */
-.kpi-accent{
-  position:absolute;
-  top:0; left:0; right:0;
-  height: 6px;
-  background: linear-gradient(90deg, #1F6FEB 0%, #0B3D91 100%);
-  opacity: .9;
-}
-.kpi-accent.green{ background: linear-gradient(90deg, #16A34A 0%, #22C55E 100%); }
-.kpi-accent.orange{ background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%); }
-.kpi-accent.red{ background: linear-gradient(90deg, #DC2626 0%, #F43F5E 100%); }
-
-/* barre de progression */
-.kpi-bar{
-  margin-top: 12px;
-  height: 9px;
-  background: #F1F5F9;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-.kpi-bar > div{
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #1F6FEB 0%, #0B3D91 100%);
-}
-
-/* couleurs bar selon statut */
-.kpi-bar.green > div{ background: linear-gradient(90deg, #16A34A 0%, #22C55E 100%); }
-.kpi-bar.orange > div{ background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%); }
-.kpi-bar.red > div{ background: linear-gradient(90deg, #DC2626 0%, #F43F5E 100%); }
-
-/* Badges statut existants (si tu les utilises) */
-.badge{
-  display:inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 1000;
-  font-size: 12px;
-  border: 1px solid #E6EAF2;
-  letter-spacing: .2px;
-}
-.badge-ok{ background:#E9F7EF; color:#145A32; }
-.badge-warn{ background:#FEF5E7; color:#7D6608; }
-.badge-bad{ background:#FDEDEC; color:#922B21; }
-</style>
-""",
+      /* --- Badges statut --- */
+      .badge{
+        display:inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 12px;
+        border: 1px solid #E6EAF2;
+      }
+      .badge-ok{ background:#E9F7EF; color:#145A32; }
+      .badge-warn{ background:#FEF5E7; color:#7D6608; }
+      .badge-bad{ background:#FDEDEC; color:#922B21; }
+    </style>
+    """,
     unsafe_allow_html=True
 )
 
-# ============================
-# BANDEAU (HTML)
-# ============================
 st.markdown(
-    f"""
-<div class="iaid-wrap">
-  <div class="iaid-banner">
-    <div class="iaid-row">
-      <div class="iaid-logo">
-        {f"<img src='{logo_uri}' />" if logo_uri else "<div class='iaid-mono'>IAID</div>"}
+    """
+    <div class="iaid-banner">
+      <div class="title">Département IA &amp; Ingénierie des Données (IAID)</div>
+      <div class="subtitle">
+        Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière
       </div>
-      <div style="flex:1;">
-        <div class="iaid-title">Département IA &amp; Ingénierie des Données (IAID)</div>
-        <div class="iaid-subtitle">Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière</div>
-        <div class="iaid-chips">
-          <div class="iaid-chip">Excel multi-feuilles → Consolidation automatique</div>
-          <div class="iaid-chip">KPIs • Alertes • Qualité</div>
-          <div class="iaid-chip">Exports : PDF officiel + Excel consolidé</div>
-        </div>
+      <div class="iaid-badges">
+        <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+        <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+        <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
       </div>
     </div>
-  </div>
-</div>
-""",
+    """,
     unsafe_allow_html=True
 )
 
-# ============================
-# KPI PREMIUM (fonctions)
-# ============================
-def _level_class(level: str) -> str:
-    # level: "green" | "orange" | "red" | "blue"
-    level = (level or "").lower().strip()
-    if level in ("green", "orange", "red"):
-        return level
-    return "blue"
-
-def kpi_card(label: str, value: str, sub: str = "", icon: str = "📌",
-             pct: float | None = None, level: str = "blue"):
-    """
-    pct: 0..100 (si tu veux une barre de progression)
-    level: green/orange/red/blue (couleur de statut)
-    """
-    lvl = _level_class(level)
-    pct_val = None if pct is None else max(0, min(100, float(pct)))
-
-    bar_html = ""
-    if pct_val is not None:
-        bar_html = f"""
-          <div class="kpi-bar {lvl}">
-            <div style="width:{pct_val:.0f}%"></div>
-          </div>
-        """
-
-    st.markdown(
-        f"""
-<div class="kpi-card">
-  <div class="kpi-accent {lvl}"></div>
-  <div class="kpi-top">
-    <div class="kpi-label">{label}</div>
-    <div class="kpi-icon">{icon}</div>
-  </div>
-  <div class="kpi-value">{value}</div>
-  <div class="kpi-sub">{sub}</div>
-  {bar_html}
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-def kpi_row(cards: list[tuple[str, str, str, str, float | None, str]]):
-    """
-    cards: [(label, value, sub, icon, pct, level), ...]
-    """
-    st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
-    for (label, value, sub, icon, pct, level) in cards:
-        kpi_card(label, value, sub, icon, pct, level)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # -----------------------------
@@ -899,26 +645,11 @@ with tab_overview:
     nb_nd   = int((filtered["Statut_auto"] == "Non démarré").sum())
     retard_total = float(filtered.loc[filtered["Écart"] < 0, "Écart"].sum()) if total else 0.0
 
-    # Exemple: couleurs selon performance (taux_vert / taux_orange)
-    def perf_level(taux_pct: float, vert: float, orange: float) -> str:
-        # vert/orange sont en 0..1 dans ton code
-        if taux_pct >= vert * 100:
-            return "green"
-        if taux_pct >= orange * 100:
-            return "orange"
-        return "red"
-
-    level_taux = perf_level(taux_moy, thresholds["taux_vert"], thresholds["taux_orange"])
-
-    kpi_row([
-        ("Matières", f"{total}", "Nombre total (filtre actif)", "📚", None, "blue"),
-        ("Taux moyen", f"{taux_moy:.1f}%", "Avancement global", "📈", taux_moy, level_taux),
-        ("Terminées", f"{nb_term}", "Matières complétées", "✅", None, "green"),
-        ("En cours", f"{nb_enc}", "Matières en exécution", "🟠", None, "orange"),
-        ("Retard cumulé", f"{retard_total:.0f} h", "Somme des écarts négatifs", "⏱️", None, "red" if retard_total < 0 else "blue"),
-    ])
-
-
+    c1.metric("Matières", f"{total}")
+    c2.metric("Taux moyen", f"{taux_moy:.1f}%")
+    c3.metric("Terminées", f"{nb_term}")
+    c4.metric("En cours", f"{nb_enc}")
+    c5.metric("Retard cumulé (h)", f"{retard_total:.0f}")
 
     st.divider()
 
