@@ -680,12 +680,14 @@ type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if s
 selected_type = st.sidebar.multiselect(
     "Types (CM/TD/TP)",
     type_opts,
-    default=type_opts
+    default=type_opts,
+    key="filter_type"
 )
 
 
+
 type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if str(x).strip()])
-selected_type = st.sidebar.multiselect("Types (CM/TD/TP)", type_opts, default=type_opts)
+selected_type = st.sidebar.multiselect("Types (CM/TD/TP)", type_opts, default=type_opts, key="filter_type")
 
 search_matiere = st.sidebar.text_input("Recherche Matière (regex)", value="")
 show_only_delay = st.sidebar.checkbox("Uniquement retards (Écart < 0)", value=False)
@@ -704,6 +706,7 @@ if "Responsable" in filtered.columns:
 # --- Filtre Type (CM / TD / TP) ---
 if "Type" in filtered.columns:
     filtered = filtered[filtered["Type"].isin(selected_type)]
+
 
 
 # --------- AJOUT PRO : application des filtres ---------
