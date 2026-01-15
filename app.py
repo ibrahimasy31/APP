@@ -671,17 +671,12 @@ selected_status = st.sidebar.multiselect("Statuts", status_opts, default=status_
 # --------- AJOUT PRO : filtres Responsable + Type ---------
 resp_opts = sorted([x for x in df_period["Responsable"].dropna().unique().tolist() if str(x).strip()])
 selected_resp = st.sidebar.multiselect(
-    "Responsables",
-    resp_opts,
-    default=resp_opts if len(resp_opts) <= 30 else resp_opts[:30]
+    "Responsables", resp_opts, default=resp_opts, key="ms_responsables"
 )
 
 type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if str(x).strip()])
 selected_type = st.sidebar.multiselect(
-    "Types (CM/TD/TP)",
-    type_opts,
-    default=type_opts,
-    key="filter_type"
+    "Types (CM/TD/TP)", type_opts, default=type_opts, key="ms_types"
 )
 
 
@@ -692,44 +687,46 @@ selected_type = st.sidebar.multiselect("Types (CM/TD/TP)", type_opts, default=ty
 search_matiere = st.sidebar.text_input("Recherche Matière (regex)", value="")
 show_only_delay = st.sidebar.checkbox("Uniquement retards (Écart < 0)", value=False)
 min_vhp = st.sidebar.number_input("VHP min", min_value=0.0, value=0.0, step=1.0)
-
-filtered = df_period[
+# -----------------------------
+# Dataset BASE : ne dépend PAS des filtres Enseignant/Type
+# -----------------------------
+filtered_base = df_period[
     df_period["Classe"].isin(selected_classes)
     & df_period["Statut_auto"].isin(selected_status)
     & (df_period["VHP"] >= min_vhp)
 ].copy()
 
-# --- Filtre Responsable ---
-if "Responsable" in filtered.columns:
-    filtered = filtered[filtered["Responsable"].isin(selected_resp)]
-
-# --- Filtre Type (CM / TD / TP) ---
-if "Type" in filtered.columns:
-    filtered = filtered[filtered["Type"].isin(selected_type)]
-
-
-
-# --------- AJOUT PRO : application des filtres ---------
-if resp_opts:
-    filtered = filtered[filtered["Responsable"].isin(selected_resp)]
-if type_opts:
-    filtered = filtered[filtered["Type"].isin(selected_type)]
-
-
-# Application du filtre semestre si applicable
+# Semestre
 if selected_semestre is not None:
-    filtered = filtered[filtered["Semestre_norm"] == selected_semestre]
+    filtered_base = filtered_base[filtered_base["Semestre_norm"] == selected_semestre]
 
-
-
+# Recherche matière
 if search_matiere.strip():
     try:
-        filtered = filtered[filtered["Matière"].str.contains(search_matiere, case=False, regex=True, na=False)]
+        filtered_base = filtered_base[
+            filtered_base["Matière"].str.contains(search_matiere, case=False, regex=True, na=False)
+        ]
     except re.error:
         st.sidebar.warning("Regex invalide — recherche ignorée.")
 
+# Retards seulement
 if show_only_delay:
-    filtered = filtered[filtered["Écart"] < 0]
+    filtered_base = filtered_base[filtered_base["Écart"] < 0]
+
+# -----------------------------
+# Filtres Enseignant/Type : OPTIONNELS
+# -----------------------------
+apply_teacher_filters = st.sidebar.checkbox(
+    "Appliquer filtres Enseignant/Type", value=False, key="cb_apply_teacher"
+)
+
+filtered = filtered_base.copy()
+
+if apply_teacher_filters:
+    if resp_opts and selected_resp:
+        filtered = filtered[filtered["Responsable"].isin(selected_resp)]
+    if type_opts and selected_type:
+        filtered = filtered[filtered["Type"].isin(selected_type)]
 
 # -----------------------------
 # Onglets (Ultra)
