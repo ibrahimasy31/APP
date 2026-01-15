@@ -900,7 +900,7 @@ with tab_classes:
         )
 
     st.divider()
-    st.write("### Détails classe A vs B (KPIs)")
+    st.write(f"### Détails — {cls1} vs {cls2} (KPIs)")
     A = filtered[filtered["Classe"] == cls1].copy()
     B = filtered[filtered["Classe"] == cls2].copy()
 
