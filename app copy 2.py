@@ -178,46 +178,15 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [clean_colname(c) for c in df.columns]
     # Harmonisation fréquente
     rename_map = {
-    # On évite de garder "Taux (%)" comme champ principal (on recalcule Taux)
-    "Taux (%)": "Taux_excel",
-    "Taux": "Taux_excel",
-
-    # Mesures
-    "Ecart": "Écart",
-    "Écart": "Écart",
-    "Vhr": "VHR",
-    "VHP ": "VHP",
-
-    # Libellés
-    "Matiere": "Matière",
-    "Matière ": "Matière",
-
-    # --------- AJOUT PRO ---------
-    # Responsable
-    "Responsable ": "Responsable",
-    "Enseignant": "Responsable",
-    "Prof": "Responsable",
-
-    # Type
-    "Type ": "Type",
-    "Nature": "Type",
-
-    # Semestre
-    "Semestre ": "Semestre",
-    "Semester": "Semestre",
-
-    # Observations
-    "Observation": "Observations",
-    "Observations ": "Observations",
-
-    # Dates prévues (si tu les as dans certaines feuilles)
-    "Début prévu ": "Début prévu",
-    "Debut prevu": "Début prévu",
-    "Début": "Début prévu",
-    "Fin prévue ": "Fin prévue",
-    "Fin prevue": "Fin prévue",
-    "Fin": "Fin prévue",}
-
+        "Taux (%)": "Taux (%)",
+        "Taux": "Taux (%)",
+        "Ecart": "Écart",
+        "Écart": "Écart",
+        "Vhr": "VHR",
+        "VHP ": "VHP",
+        "Matiere": "Matière",
+        "Matière ": "Matière",
+    }
     df = df.rename(columns={k:v for k,v in rename_map.items() if k in df.columns})
     return df
 
@@ -248,18 +217,6 @@ def to_numeric_safe(s: pd.Series) -> pd.Series:
 
 def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    # --------- AJOUT PRO : colonnes garanties ---------
-    for c in ["Responsable", "Type", "Semestre", "Observations", "Début prévu", "Fin prévue"]:
-        if c not in df.columns:
-            df[c] = ""
-
-    # Nettoyage texte (éviter 'nan')
-    for c in ["Matière", "Responsable", "Type", "Semestre", "Observations"]:
-        df[c] = df[c].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-
-    df["Début prévu"] = df["Début prévu"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-    df["Fin prévue"]  = df["Fin prévue"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-
     df["VHP"] = to_numeric_safe(df["VHP"]).fillna(0)
     for m in MOIS_COLS:
         df[m] = to_numeric_safe(df[m]).fillna(0)
@@ -660,13 +617,6 @@ selected_classes = st.sidebar.multiselect("Classes", classes, default=classes)
 status_opts = ["Non démarré", "En cours", "Terminé"]
 selected_status = st.sidebar.multiselect("Statuts", status_opts, default=status_opts)
 
-# --------- AJOUT PRO : filtres Responsable + Type ---------
-resp_opts = sorted([x for x in df_period["Responsable"].dropna().unique().tolist() if str(x).strip()])
-selected_resp = st.sidebar.multiselect("Responsables", resp_opts, default=resp_opts)
-
-type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if str(x).strip()])
-selected_type = st.sidebar.multiselect("Types (CM/TD/TP)", type_opts, default=type_opts)
-
 search_matiere = st.sidebar.text_input("Recherche Matière (regex)", value="")
 show_only_delay = st.sidebar.checkbox("Uniquement retards (Écart < 0)", value=False)
 min_vhp = st.sidebar.number_input("VHP min", min_value=0.0, value=0.0, step=1.0)
@@ -676,13 +626,6 @@ filtered = df_period[
     & df_period["Statut_auto"].isin(selected_status)
     & (df_period["VHP"] >= min_vhp)
 ].copy()
-
-# --------- AJOUT PRO : application des filtres ---------
-if resp_opts:
-    filtered = filtered[filtered["Responsable"].isin(selected_resp)]
-if type_opts:
-    filtered = filtered[filtered["Type"].isin(selected_type)]
-
 
 # Application du filtre semestre si applicable
 if selected_semestre is not None:
@@ -817,7 +760,8 @@ with tab_classes:
         "Matieres": st.column_config.NumberColumn("Matières", format="%d"),
         "Terminees": st.column_config.NumberColumn("Terminées", format="%d"),
         "Non_demarre": st.column_config.NumberColumn("Non démarré", format="%d"),
-    })
+    }
+)
 
 
     st.divider()
@@ -965,12 +909,7 @@ with tab_export:
     st.subheader("Exports (Excel consolidé + PDF officiel)")
 
     st.write("### Export Excel consolidé")
-    export_df = filtered[
-    ["Classe","Semestre","Matière","Responsable","Type","Début prévu","Fin prévue","VHP"]
-    + MOIS_COLS
-    + ["VHR","Écart","Taux","Statut_auto","Observations"]
-    ].copy()
-
+    export_df = filtered[["Classe","Matière","VHP"] + MOIS_COLS + ["VHR","Écart","Taux","Statut_auto","Observations"]].copy()
     export_df["Taux"] = (export_df["Taux"]*100).round(2)
 
     synth_class = filtered.groupby("Classe").agg(
@@ -1005,11 +944,7 @@ with tab_export:
 
     if st.button("Générer le PDF"):
         pdf = build_pdf_report(
-        df=filtered[
-        ["Classe","Semestre","Matière","Responsable","Type","Début prévu","Fin prévue","VHP"]
-        + mois_couverts
-        + ["VHR","Écart","Taux","Statut_auto","Observations"]
-        ].copy(),
+            df=filtered[["Classe","Matière","VHP"] + mois_couverts + ["VHR","Écart","Taux","Statut_auto","Statut","Observations"]].copy(),
             title=pdf_title,
             mois_couverts=mois_couverts,
             thresholds=thresholds,
