@@ -297,7 +297,13 @@ def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 def unpivot_months(df: pd.DataFrame) -> pd.DataFrame:
     # Format long : Classe, Matière, VHP, Mois, Heures
-    id_cols = [c for c in ["Classe", "Matière", "VHP", "VHR", "Écart", "Taux", "Statut_auto", "Statut", "Observations"] if c in df.columns]
+    id_cols = [c for c in [
+        "_rowid",
+        "Classe", "Semestre", "Matière", "Responsable", "Type",
+        "VHP", "VHR", "Écart", "Taux",
+        "Statut_auto", "Statut", "Observations",
+        "Début prévu", "Fin prévue"
+    ] if c in df.columns]
     long = df.melt(id_vars=id_cols, value_vars=MOIS_COLS, var_name="Mois", value_name="Heures")
     long["Mois_idx"] = long["Mois"].map(MOIS_ORDER).fillna(0).astype(int)
     return long
@@ -380,6 +386,8 @@ def load_excel_all_sheets(file_bytes: bytes) -> Tuple[pd.DataFrame, Dict[str, Li
 
     all_df = pd.concat(frames, ignore_index=True)
     all_df = compute_metrics(all_df)
+    all_df["_rowid"] = np.arange(len(all_df))
+
 
     # Qualité globale
     if all_df["Matière_vide"].mean() > 0.05:
@@ -662,7 +670,19 @@ selected_status = st.sidebar.multiselect("Statuts", status_opts, default=status_
 
 # --------- AJOUT PRO : filtres Responsable + Type ---------
 resp_opts = sorted([x for x in df_period["Responsable"].dropna().unique().tolist() if str(x).strip()])
-selected_resp = st.sidebar.multiselect("Responsables", resp_opts, default=resp_opts)
+selected_resp = st.sidebar.multiselect(
+    "Responsables",
+    resp_opts,
+    default=resp_opts if len(resp_opts) <= 30 else resp_opts[:30]
+)
+
+type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if str(x).strip()])
+selected_type = st.sidebar.multiselect(
+    "Types (CM/TD/TP)",
+    type_opts,
+    default=type_opts
+)
+
 
 type_opts = sorted([x for x in df_period["Type"].dropna().unique().tolist() if str(x).strip()])
 selected_type = st.sidebar.multiselect("Types (CM/TD/TP)", type_opts, default=type_opts)
@@ -676,6 +696,15 @@ filtered = df_period[
     & df_period["Statut_auto"].isin(selected_status)
     & (df_period["VHP"] >= min_vhp)
 ].copy()
+
+# --- Filtre Responsable ---
+if "Responsable" in filtered.columns:
+    filtered = filtered[filtered["Responsable"].isin(selected_resp)]
+
+# --- Filtre Type (CM / TD / TP) ---
+if "Type" in filtered.columns:
+    filtered = filtered[filtered["Type"].isin(selected_type)]
+
 
 # --------- AJOUT PRO : application des filtres ---------
 if resp_opts:
@@ -782,6 +811,7 @@ with tab_overview:
 
 
 # ====== PAR CLASSE ======
+# ====== PAR CLASSE ======
 with tab_classes:
     st.subheader("Drilldown par classe + comparaison")
 
@@ -792,6 +822,7 @@ with tab_classes:
 
     with colA:
         st.write("### Tableau synthèse par classe")
+
         synth = filtered.groupby("Classe").agg(
             Matieres=("Matière", "count"),
             Taux_moy=("Taux", "mean"),
@@ -800,25 +831,25 @@ with tab_classes:
             Retard_h=("Écart", lambda s: float(s[s < 0].sum())),
             Terminees=("Statut_auto", lambda s: int((s == "Terminé").sum())),
             Non_demarre=("Statut_auto", lambda s: int((s == "Non démarré").sum())),
-        ).reset_index()# Garde taux numérique pour gradient
-    synth_view = synth.copy()
-    # ici synth_view["Taux_moy"] est encore 0..1 (car "mean" sur Taux)
-    synth_view["Taux (%)"] = (synth_view["Taux_moy"] * 100).round(1)
+        ).reset_index()
 
-    show = synth_view[["Classe","Matieres","Taux (%)","VHP_total","VHR_total","Retard_h","Terminees","Non_demarre"]].copy()
-    st.dataframe(
-    show,
-    use_container_width=True,
-    column_config={
-        "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
-        "Retard_h": st.column_config.NumberColumn("Retard (h)", format="%.0f"),
-        "VHP_total": st.column_config.NumberColumn("VHP total", format="%.0f"),
-        "VHR_total": st.column_config.NumberColumn("VHR total", format="%.0f"),
-        "Matieres": st.column_config.NumberColumn("Matières", format="%d"),
-        "Terminees": st.column_config.NumberColumn("Terminées", format="%d"),
-        "Non_demarre": st.column_config.NumberColumn("Non démarré", format="%d"),
-    })
+        synth_view = synth.copy()
+        synth_view["Taux (%)"] = (synth_view["Taux_moy"] * 100).round(1)
 
+        show = synth_view[["Classe","Matieres","Taux (%)","VHP_total","VHR_total","Retard_h","Terminees","Non_demarre"]].copy()
+        st.dataframe(
+            show,
+            use_container_width=True,
+            column_config={
+                "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
+                "Retard_h": st.column_config.NumberColumn("Retard (h)", format="%.0f"),
+                "VHP_total": st.column_config.NumberColumn("VHP total", format="%.0f"),
+                "VHR_total": st.column_config.NumberColumn("VHR total", format="%.0f"),
+                "Matieres": st.column_config.NumberColumn("Matières", format="%d"),
+                "Terminees": st.column_config.NumberColumn("Terminées", format="%d"),
+                "Non_demarre": st.column_config.NumberColumn("Non démarré", format="%d"),
+            }
+        )
 
     st.divider()
     st.write("### Détails classe A vs B (KPIs)")
@@ -832,6 +863,7 @@ with tab_classes:
             "Retard (h)": float(one.loc[one["Écart"] < 0, "Écart"].sum()) if len(one) else 0.0,
             "Non démarré": int((one["Statut_auto"]=="Non démarré").sum()),
         }
+
     kA, kB = kpis(A), kpis(B)
     comp = pd.DataFrame({"Indicateur": list(kA.keys()), cls1: list(kA.values()), cls2: list(kB.values())})
     st.dataframe(comp, use_container_width=True)
@@ -850,11 +882,20 @@ with tab_classes:
         }
     )
 
-
     st.write("### Retards (Top 15) — Classe B")
     tB = B.sort_values("Écart").head(15)[["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]].copy()
-    tB["Taux"] = (tB["Taux"]*100).round(1).astype(str)+"%"
-    st.dataframe(tB, use_container_width=True)
+    tB["Taux (%)"] = (tB["Taux"] * 100).round(1)
+    st.dataframe(
+        tB[["Matière","VHP","VHR","Écart","Taux (%)","Statut_auto","Observations"]],
+        use_container_width=True,
+        column_config={
+            "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
+            "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
+            "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
+            "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+        }
+    )
+
 
 # ====== PAR MATIÈRE ======
 with tab_matieres:
@@ -885,9 +926,9 @@ with tab_mensuel:
 
     long = unpivot_months(df_period)
     # Appliquer filtres classes/statuts à la table longue via merge index
-    key_cols = ["Classe","Matière"]
-    base_keys = filtered[key_cols].drop_duplicates()
-    long_f = long.merge(base_keys, on=key_cols, how="inner")
+    base_keys = filtered[["_rowid"]].drop_duplicates()
+    long_f = long.merge(base_keys, on="_rowid", how="inner")
+
 
     # Heures par mois (total)
     monthly = long_f.groupby("Mois").agg(Heures=("Heures","sum")).reindex(MOIS_COLS).fillna(0)
