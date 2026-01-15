@@ -184,6 +184,23 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     "Matière ": "Matière",
     "VHP ": "VHP",
 
+    # Responsable
+    "Responsable ": "Responsable",
+    "Enseignant": "Responsable",
+    "Prof": "Responsable",
+
+    # Dates prévues
+    "Début prévu ": "Début prévu",
+    "Debut prevu": "Début prévu",
+    "Début": "Début prévu",
+    "Fin prévue ": "Fin prévue",
+    "Fin prevue": "Fin prévue",
+    "Fin": "Fin prévue",
+
+    # Type
+    "Type ": "Type",
+    "Nature": "Type",
+
     # Semestre
     "Semestre ": "Semestre",
     "Semester": "Semestre",
@@ -197,7 +214,12 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     "Juillet": "Juil",
     "Juil.": "Juil",
     "Aout": "Août",
-    "Août ": "Août",}
+    "Août ": "Août",
+
+    # Observations
+    "Observation": "Observations",
+    "Observations ": "Observations",}
+
    
     df = df.rename(columns={k:v for k,v in rename_map.items() if k in df.columns})
     return df
@@ -229,20 +251,47 @@ def to_numeric_safe(s: pd.Series) -> pd.Series:
 
 def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    # Supprimer les colonnes calculées venant d'Excel (si présentes)
-    for c in ["VHR", "Écart", "Taux", "Taux (%)"]:
+
+    # 1) Supprimer les colonnes calculées venant d'Excel (si présentes)
+    for c in ["VHR", "Écart", "Ecart", "Taux", "Taux (%)", "Statut_auto"]:
         if c in df.columns:
             df = df.drop(columns=[c])
 
+    # 2) Colonnes "pro" (si absentes dans certaines feuilles)
+    pro_cols = ["Responsable", "Début prévu", "Fin prévue", "Type", "Semestre", "Observations"]
+    for c in pro_cols:
+        if c not in df.columns:
+            df[c] = ""
+
+    # 3) Nettoyage texte (éviter les 'nan')
+    for c in ["Matière", "Responsable", "Type", "Semestre", "Observations"]:
+        df[c] = df[c].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
+
+    # Début/Fin prévu : on garde en texte propre (version date possible après)
+    df["Début prévu"] = df["Début prévu"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
+    df["Fin prévue"]  = df["Fin prévue"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
+
+    # 4) Nettoyage matière (espaces multiples, retours ligne)
+    df["Matière"] = df["Matière"].str.replace("\n", " ").str.replace(r"\s+", " ", regex=True).str.strip()
+
+    # 5) Numériques : VHP + mois
+    if "VHP" not in df.columns:
+        df["VHP"] = 0
+
     df["VHP"] = to_numeric_safe(df["VHP"]).fillna(0)
+
+    # S'assure que tous les mois existent + conversion numérique
+    df = ensure_month_cols(df)
     for m in MOIS_COLS:
         df[m] = to_numeric_safe(df[m]).fillna(0)
 
+    # 6) Calculs
     df["VHR"] = df[MOIS_COLS].sum(axis=1)
     df["Écart"] = df["VHR"] - df["VHP"]
-    df["Taux"] = np.where(df["VHP"] == 0, 0, df["VHR"] / df["VHP"])
+    df["Taux"] = np.where(df["VHP"] <= 0, 0, df["VHR"] / df["VHP"])
 
-    def status_row(vhr, vhp):
+    # 7) Statut automatique
+    def status_row(vhr: float, vhp: float) -> str:
         if vhr <= 0:
             return "Non démarré"
         if vhr < vhp:
@@ -251,23 +300,12 @@ def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
     df["Statut_auto"] = [status_row(vhr, vhp) for vhr, vhp in zip(df["VHR"], df["VHP"])]
 
-    # Garder l'ancien champ "Statut" si présent mais proposer "Statut_auto"
-    if "Statut" not in df.columns:
-        df["Statut"] = df["Statut_auto"]
-    else:
-        df["Statut"] = df["Statut"].astype(str).replace({"nan": ""}).fillna("")
-
-    if "Observations" not in df.columns:
-        df["Observations"] = ""
-
-    # Nettoyage Matière
-    df["Matière"] = df["Matière"].astype(str).str.replace("\n", " ").str.strip()
-    df["Matière"] = df["Matière"].str.replace(r"\s+", " ", regex=True)
-
-    # Indicateur "Matière" vide
+    # 8) Indicateurs qualité
     df["Matière_vide"] = df["Matière"].eq("") | df["Matière"].str.lower().eq("nan")
+    df["VHP_invalide"] = df["VHP"] <= 0
 
     return df
+
 
 def unpivot_months(df: pd.DataFrame) -> pd.DataFrame:
     # Format long : Classe, Matière, VHP, Mois, Heures
@@ -330,7 +368,7 @@ def load_excel_all_sheets(file_bytes: bytes) -> Tuple[pd.DataFrame, Dict[str, Li
 
         # Détection colonnes minimales
         missing = []
-        for col in ["Matière", "VHP"]:
+        for col in ["Matière", "Semestre", "VHP"]:
             if col not in df.columns:
                 missing.append(col)
 
@@ -523,7 +561,7 @@ with st.sidebar:
             file_bytes = uploaded.getvalue()
             source_label = f"Upload: {uploaded.name}"
 
-    st.caption("Chaque feuille = une classe. Colonnes attendues : Matière, VHP, Oct..Mai (au minimum).")
+    st.caption("Chaque feuille = une classe. Colonnes attendues : Matière, Semestre, VHP, Oct..Août (au minimum).")
 
     # Période
     st.subheader("Période couverte")
@@ -921,7 +959,12 @@ with tab_export:
     st.subheader("Exports (Excel consolidé + PDF officiel)")
 
     st.write("### Export Excel consolidé")
-    export_df = filtered[["Classe","Matière","VHP"] + MOIS_COLS + ["VHR","Écart","Taux","Statut_auto","Observations"]].copy()
+    export_df = filtered[
+    ["Classe","Semestre","Matière","Responsable","Type","Début prévu","Fin prévue","VHP"]
+    + MOIS_COLS
+    + ["VHR","Écart","Taux","Statut_auto","Observations"]
+    ].copy()
+
     export_df["Taux"] = (export_df["Taux"]*100).round(2)
 
     synth_class = filtered.groupby("Classe").agg(
