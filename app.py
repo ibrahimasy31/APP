@@ -564,8 +564,8 @@ def build_pdf_report(
 # -----------------------------
 # UI
 # -----------------------------
-st.title("📊 IAID — Suivi mensuel des enseignements")
-st.caption("Département IA & Ingénierie des Données (IAID) — Consolidation automatique à partir des feuilles Excel (1 feuille = 1 classe).")
+st.markdown("### 📊 Suivi mensuel des enseignements")
+st.caption("Consolidation automatique à partir des feuilles Excel (1 feuille = 1 classe).")
 
 
 with st.sidebar:
@@ -759,19 +759,33 @@ tab_overview, tab_classes, tab_matieres, tab_mensuel, tab_alertes, tab_qualite, 
 with tab_overview:
     st.subheader("KPIs globaux (période sélectionnée)")
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    total = len(filtered)
-    taux_moy = float(filtered["Taux"].mean() * 100) if total else 0.0
-    nb_term = int((filtered["Statut_auto"] == "Terminé").sum())
-    nb_enc  = int((filtered["Statut_auto"] == "En cours").sum())
-    nb_nd   = int((filtered["Statut_auto"] == "Non démarré").sum())
-    retard_total = float(filtered.loc[filtered["Écart"] < 0, "Écart"].sum()) if total else 0.0
+    st.markdown(
+    f"""
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:6px;">
+      <div style="background:#fff;border:1px solid #E6EAF2;border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px rgba(14,30,37,0.06);">
+        <div style="font-weight:900;opacity:.75;font-size:12px;">Matières</div>
+        <div style="font-weight:950;font-size:22px;margin-top:6px;">{total}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #E6EAF2;border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px rgba(14,30,37,0.06);">
+        <div style="font-weight:900;opacity:.75;font-size:12px;">Taux moyen</div>
+        <div style="font-weight:950;font-size:22px;margin-top:6px;">{taux_moy:.1f}%</div>
+      </div>
+      <div style="background:#fff;border:1px solid #E6EAF2;border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px rgba(14,30,37,0.06);">
+        <div style="font-weight:900;opacity:.75;font-size:12px;">Terminées</div>
+        <div style="font-weight:950;font-size:22px;margin-top:6px;">{nb_term}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #E6EAF2;border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px rgba(14,30,37,0.06);">
+        <div style="font-weight:900;opacity:.75;font-size:12px;">En cours</div>
+        <div style="font-weight:950;font-size:22px;margin-top:6px;">{nb_enc}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #E6EAF2;border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px rgba(14,30,37,0.06);">
+        <div style="font-weight:900;opacity:.75;font-size:12px;">Retard cumulé (h)</div>
+        <div style="font-weight:950;font-size:22px;margin-top:6px;">{retard_total:.0f}</div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True)
 
-    c1.metric("Matières", f"{total}")
-    c2.metric("Taux moyen", f"{taux_moy:.1f}%")
-    c3.metric("Terminées", f"{nb_term}")
-    c4.metric("En cours", f"{nb_enc}")
-    c5.metric("Retard cumulé (h)", f"{retard_total:.0f}")
 
     st.divider()
 
@@ -946,7 +960,7 @@ with tab_mensuel:
 
     long = unpivot_months(df_period)
     # Appliquer filtres classes/statuts à la table longue via merge index
-    base_keys = filtered_base[["_rowid"]].drop_duplicates()
+    base_keys = filtered[["_rowid"]].drop_duplicates()
     long_f = long.merge(base_keys, on="_rowid", how="inner")
 
 
