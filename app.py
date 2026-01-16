@@ -261,20 +261,74 @@ st.markdown(
 """
 <style>
 /* =========================================================
-   IAID — THÈME BLEU EXÉCUTIF DG
-   Lisibilité absolue • Sobriété • Institutionnel
+   IAID — THÈME BLEU EXÉCUTIF DG (v2 - Lisibilité ++)
+   Objectif: lisible sur TOUS navigateurs + tous composants Streamlit
    ========================================================= */
 
-/* ===== RESET & SÉCURITÉ TEXTE ===== */
-body, .stApp, p, span, div, label {
-  color: #0F172A !important; /* slate-900 */
-}
-h1, h2, h3, h4, h5 {
-  color: #0B3D91 !important;
-  font-weight: 800 !important;
+/* -----------------------------
+   1) TYPO & COULEURS DE BASE
+------------------------------*/
+:root{
+  --bg: #F6F8FC;
+  --bg2:#EEF3FA;
+  --card:#FFFFFF;
+  --text:#0F172A;      /* slate-900 */
+  --muted:#475569;     /* slate-600 */
+  --line:#E3E8F0;
+
+  --blue:#0B3D91;
+  --blue2:#134FA8;
+  --blue3:#1F6FEB;
+
+  --ok:#1E8E3E;
+  --warn:#F29900;
+  --bad:#D93025;
+
+  --focus:#5AA2FF;     /* focus ring accessible */
 }
 
-/* ===== ESPACEMENT STREAMLIT ===== */
+html, body, .stApp{
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
+}
+
+/* Texte global (évite le “texte invisible” sur certains navigateurs) */
+body, .stApp, p, span, div, label{
+  color: var(--text) !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Titres */
+h1, h2, h3, h4, h5{
+  color: var(--blue) !important;
+  font-weight: 850 !important;
+  letter-spacing: .2px;
+}
+
+/* Liens */
+a, a:visited{
+  color: var(--blue3) !important;
+  text-decoration: none;
+}
+a:hover{ text-decoration: underline; }
+
+/* Petits textes / captions Streamlit */
+.stCaption, small{
+  color: var(--muted) !important;
+  font-weight: 650;
+}
+
+/* Code blocks / inline code */
+code, pre{
+  background: #F1F5FF !important;
+  border: 1px solid #DDE6FF !important;
+  color: #0B1E4B !important;
+  border-radius: 12px !important;
+}
+
+/* -----------------------------
+   2) STREAMLIT LAYOUT / HEADER
+------------------------------*/
 .block-container{
   padding-top: .25rem !important;
   padding-bottom: 2rem !important;
@@ -285,48 +339,107 @@ div[data-testid="stToolbar"]{
   height: 0px !important;
 }
 
-/* ===== BACKGROUND GLOBAL (SAFE) ===== */
-.stApp{
-  background:
-    linear-gradient(180deg, #F4F7FB 0%, #EEF3FA 40%, #F6F8FC 100%);
-}
-
-/* ===== SIDEBAR ===== */
+/* -----------------------------
+   3) SIDEBAR
+------------------------------*/
 section[data-testid="stSidebar"]{
-  background: #FFFFFF !important;
-  border-right: 1px solid #E3E8F0;
+  background: var(--card) !important;
+  border-right: 1px solid var(--line);
 }
 .sidebar-card{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 10px;
   box-shadow: 0 6px 18px rgba(14,30,37,0.05);
 }
 
-/* ===== HEADER DG ===== */
+/* Titre dans la sidebar (si tu utilises st.sidebar.header) */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3{
+  color: var(--blue) !important;
+}
+
+/* -----------------------------
+   4) INPUTS (selectbox, text_input, slider…)
+   -> gros gain de lisibilité
+------------------------------*/
+div[data-baseweb="input"] > div{
+  background: #FFFFFF !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+}
+div[data-baseweb="input"] input{
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+/* Selectbox */
+div[data-baseweb="select"] > div{
+  background: #FFFFFF !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+}
+div[data-baseweb="select"] *{
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+/* Multiselect tags */
+span[data-baseweb="tag"]{
+  background: #EAF1FF !important;
+  border: 1px solid #CFE0FF !important;
+  color: var(--blue) !important;
+  font-weight: 800 !important;
+}
+
+/* Checkbox / radio labels */
+label[data-baseweb="checkbox"] span,
+label[data-baseweb="radio"] span{
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+/* Focus ring (accessibilité / clavier) */
+*:focus-visible{
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 2px !important;
+  border-radius: 10px;
+}
+
+/* -----------------------------
+   5) HEADER DG
+------------------------------*/
 .iaid-header{
-  background: linear-gradient(90deg, #0B3D91 0%, #134FA8 50%, #1F6FEB 100%);
+  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
   color: #FFFFFF !important;
   padding: 18px 22px;
   border-radius: 18px;
   box-shadow: 0 16px 36px rgba(14,30,37,0.20);
   margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+/* léger décor très discret */
+.iaid-header:before{
+  content:"";
+  position:absolute;
+  top:-60%;
+  right:-30%;
+  width:520px;
+  height:520px;
+  background: rgba(255,255,255,0.10);
+  border-radius: 50%;
 }
 .iaid-header *{
   color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
 }
-.iaid-htitle{
-  font-size: 20px;
-  font-weight: 900;
-}
-.iaid-hsub{
-  font-size: 13px;
-  opacity: .95;
-  margin-top: 4px;
-}
+.iaid-htitle{ font-size: 20px; font-weight: 950; }
+.iaid-hsub{ font-size: 13px; opacity: .95; margin-top: 4px; line-height: 1.35; }
+
 .iaid-badges{
   margin-top: 10px;
   display: flex;
@@ -334,15 +447,17 @@ section[data-testid="stSidebar"]{
   flex-wrap: wrap;
 }
 .iaid-badge{
-  background: rgba(255,255,255,0.20);
-  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.32);
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 850;
 }
 
-/* ===== KPI CARDS ===== */
+/* -----------------------------
+   6) KPI CARDS
+------------------------------*/
 .kpi-grid{
   display: grid;
   grid-template-columns: repeat(5, minmax(0,1fr));
@@ -350,86 +465,141 @@ section[data-testid="stSidebar"]{
   margin-top: 6px;
 }
 .kpi{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 18px;
   padding: 14px 16px;
   box-shadow: 0 10px 24px rgba(14,30,37,0.06);
   position: relative;
+  overflow: hidden;
 }
 .kpi:before{
   content:"";
   position:absolute;
   top:0; left:0;
   width:100%; height:4px;
-  background: #0B3D91;
+  background: var(--blue);
 }
 .kpi-title{
   font-size: 12px;
-  font-weight: 800;
-  opacity: .75;
+  font-weight: 850;
+  color: var(--muted) !important;
 }
 .kpi-value{
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 950;
   margin-top: 6px;
+  color: var(--text) !important;
 }
-.kpi-good:before{ background:#1E8E3E; }
-.kpi-warn:before{ background:#F29900; }
-.kpi-bad:before{ background:#D93025; }
+.kpi-good:before{ background: var(--ok); }
+.kpi-warn:before{ background: var(--warn); }
+.kpi-bad:before{ background: var(--bad); }
 
-/* ===== TABS ===== */
+/* -----------------------------
+   7) TABS (meilleure lisibilité + hover)
+------------------------------*/
+div[data-baseweb="tab-list"]{ gap: 8px !important; }
 button[data-baseweb="tab"]{
   background: #FFFFFF !important;
-  color: #0F172A !important;
+  color: var(--text) !important;
   border-radius: 999px !important;
   padding: 10px 14px !important;
-  font-weight: 800 !important;
-  border: 1px solid #E3E8F0 !important;
+  font-weight: 850 !important;
+  border: 1px solid var(--line) !important;
+}
+button[data-baseweb="tab"]:hover{
+  border-color: #BFD4FF !important;
+  background: #F4F8FF !important;
 }
 button[data-baseweb="tab"][aria-selected="true"]{
   background: #EAF1FF !important;
-  color: #0B3D91 !important;
-  border: 1px solid #0B3D91 !important;
+  color: var(--blue) !important;
+  border: 1px solid var(--blue) !important;
 }
 
-/* ===== DATAFRAMES ===== */
+/* -----------------------------
+   8) DATAFRAMES / TABLES
+------------------------------*/
 div[data-testid="stDataFrame"]{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
-  border-radius: 16px;
-  padding: 6px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  padding: 6px !important;
+  box-shadow: 0 10px 24px rgba(14,30,37,0.05) !important;
 }
 
-/* ===== TABLE HTML ===== */
+/* Table HTML */
 .table-wrap{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+  overflow-x: auto;
+}
+table.iaid-table{
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text) !important;
+  font-size: 12px;
 }
 table.iaid-table thead th{
   background: #F1F5FB;
-  font-weight: 900;
+  font-weight: 950;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+table.iaid-table tbody td{
+  padding: 10px 12px;
+  border-bottom: 1px solid #EFF3F8;
+  vertical-align: top;
+}
+table.iaid-table tbody tr:hover{
+  background: #F7FAFF;
 }
 
-/* ===== BOUTONS ===== */
+/* -----------------------------
+   9) MESSAGES (info/success/warn/error) - lisibles
+------------------------------*/
+div[data-testid="stAlert"]{
+  border-radius: 16px !important;
+  border: 1px solid var(--line) !important;
+}
+div[data-testid="stAlert"] *{
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+/* -----------------------------
+   10) BOUTONS (lisibles partout)
+------------------------------*/
 .stButton button, .stDownloadButton button{
-  background: #0B3D91;
+  background: var(--blue) !important;
   color: #FFFFFF !important;
-  font-weight: 800;
-  border-radius: 14px;
-  border: none;
+  font-weight: 900 !important;
+  border-radius: 14px !important;
+  border: none !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 10px 22px rgba(14,30,37,0.10);
 }
 .stButton button:hover, .stDownloadButton button:hover{
-  background: #134FA8;
+  background: var(--blue2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+}
+
+/* -----------------------------
+   11) RESPONSIVE (mobile)
+------------------------------*/
+@media (max-width: 1200px){
+  .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 520px){
+  .kpi-grid{ grid-template-columns: 1fr; }
 }
 </style>
 """,
 unsafe_allow_html=True
 )
-
 
 
 
