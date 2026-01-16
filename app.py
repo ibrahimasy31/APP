@@ -42,186 +42,233 @@ st.set_page_config(
 )
 
 st.markdown(
-    """
-    <style>
-      /* ============ FIX TOP BAR / PADDING STREAMLIT ============ */
-      /* Retire l'espace inutile au-dessus */
-      .block-container{
-        padding-top: 0.3rem !important;   /* <-- IMPORTANT (au lieu de 1.2rem) */
-        padding-bottom: 2.0rem !important;
-      }
+"""
+<style>
+/* =========================================================
+   0) RESET / TOP SPACE STREAMLIT
+   ========================================================= */
 
-      /* Neutralise la barre header Streamlit (souvent responsable du "haut") */
-      header[data-testid="stHeader"]{
-        background: transparent !important;
-        height: 0px !important;
-      }
+/* Retire l'espace inutile au-dessus */
+.block-container{
+  padding-top: 0.25rem !important;
+  padding-bottom: 2.0rem !important;
+}
 
-      /* Evite que le bandeau soit collé à un margin top interne */
-      .iaid-banner{
-        margin-top: 0px !important;       /* <-- IMPORTANT */
-      }
+/* Neutralise la barre header Streamlit */
+header[data-testid="stHeader"]{
+  background: transparent !important;
+  height: 0px !important;
+}
 
-      /* ============ GLOBAL ============ */
-      .stApp { background: #F6F8FC; }
+/* Optionnel : cache aussi le petit espace du toolbar si présent (selon version) */
+div[data-testid="stToolbar"]{
+  visibility: hidden !important;
+  height: 0px !important;
+  position: fixed !important;
+}
 
-      section[data-testid="stSidebar"] {
-        background: #FFFFFF;
-        border-right: 1px solid #E6EAF2;
-      }
+/* =========================================================
+   1) GLOBAL
+   ========================================================= */
+.stApp{
+  background: #F6F8FC;
+}
 
-      /* ============ BANNER ============ */
-      .iaid-banner{
-        background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 100%);
-        color: white;
-        padding: 18px 20px;
-        border-radius: 20px;
-        box-shadow: 0 12px 28px rgba(14, 30, 37, 0.12);
-        margin: 0 0 16px 0;               /* <-- IMPORTANT : plus de 4px en haut */
-        position: relative;
-        overflow: hidden;
-      }
+/* Sidebar */
+section[data-testid="stSidebar"]{
+  background: #FFFFFF;
+  border-right: 1px solid #E6EAF2;
+}
 
-      .iaid-banner:before{
-        content:"";
-        position:absolute;
-        top:-40%;
-        left:-20%;
-        width:60%;
-        height:200%;
-        transform: rotate(20deg);
-        background: rgba(255,255,255,0.10);
-      }
-      .iaid-banner .title{
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 0.2px;
-        position: relative;
-      }
-      .iaid-banner .subtitle{
-        font-size: 13px;
-        opacity: 0.95;
-        margin-top: 6px;
-        position: relative;
-      }
-      .iaid-badges{
-        margin-top: 12px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        position: relative;
-      }
-      .iaid-badge{
-        background: rgba(255,255,255,0.16);
-        border: 1px solid rgba(255,255,255,0.22);
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 800;
-        backdrop-filter: blur(4px);
-      }
+/* =========================================================
+   2) BANNER IAID
+   ========================================================= */
+.iaid-banner{
+  margin-top: 0px !important;
+  background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 100%);
+  color: white;
+  padding: 18px 20px;
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(14, 30, 37, 0.12);
+  margin: 0 0 16px 0;
+  position: relative;
+  overflow: hidden;
+}
 
-      /* ============ KPI CARDS (st.metric) ============ */
-      div[data-testid="stMetric"]{
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-      }
-      div[data-testid="stMetric"] > div{
-        background: #FFFFFF;
-        border: 1px solid #E6EAF2;
-        padding: 14px 16px;
-        border-radius: 18px;
-        box-shadow: 0 10px 24px rgba(14, 30, 37, 0.06);
-      }
-      div[data-testid="stMetricLabel"] p{
-        font-weight: 800 !important;
-        opacity: 0.85;
-      }
-      div[data-testid="stMetricValue"]{
-        font-weight: 900 !important;
-      }
+.iaid-banner:before{
+  content:"";
+  position:absolute;
+  top:-40%;
+  left:-20%;
+  width:60%;
+  height:200%;
+  transform: rotate(20deg);
+  background: rgba(255,255,255,0.10);
+}
 
-      /* Tabs */
-      button[data-baseweb="tab"]{
-        font-weight: 800 !important;
-        letter-spacing: 0.2px;
-      }
+.iaid-banner .title{
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  position: relative;
+}
 
-      /* Dataframes */
-      div[data-testid="stDataFrame"]{
-        background: #FFFFFF;
-        border: 1px solid #E6EAF2;
-        border-radius: 18px;
-        padding: 6px;
-        box-shadow: 0 10px 24px rgba(14, 30, 37, 0.04);
-      }
+.iaid-banner .subtitle{
+  font-size: 13px;
+  opacity: 0.95;
+  margin-top: 6px;
+  position: relative;
+}
 
-      /* Buttons */
-      .stDownloadButton button, .stButton button{
-        border-radius: 14px !important;
-        padding: 10px 14px !important;
-        font-weight: 800 !important;
-      }
+.iaid-badges{
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: relative;
+}
 
-      /* Badges */
-      .badge{
-        display:inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-weight: 900;
-        font-size: 12px;
-        border: 1px solid #E6EAF2;
-        white-space: nowrap;
-      }
-      .badge-ok{ background:#E9F7EF; color:#145A32; }
-      .badge-warn{ background:#FEF5E7; color:#7D6608; }
-      .badge-bad{ background:#FDEDEC; color:#922B21; }
+.iaid-badge{
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.22);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  backdrop-filter: blur(4px);
+}
 
-            /* Hover cards */
-        .iaid-banner, div[data-testid="stMetric"] > div, .stDataFrame {
-        transition: transform .12s ease, box-shadow .12s ease;
-        }
-        div[data-testid="stMetric"] > div:hover{
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(14,30,37,0.10);
-        }
+/* =========================================================
+   3) KPI CARDS (st.metric)
+   ========================================================= */
+div[data-testid="stMetric"]{
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
 
-        /* ============ HTML TABLE (badges) ============ */
-/* ============ HTML TABLE (badges) ============ */
-        .table-wrap{
-        overflow-x:auto;
-        border:1px solid #E6EAF2;
-        border-radius:18px;
-        background:#fff;
-        box-shadow:0 10px 24px rgba(14,30,37,0.04);
-        }
-        table.iaid-table{
-        width:100%;
-        border-collapse: collapse;
-        font-size: 12px;
-        }
-        table.iaid-table thead th{
-        background:#F0F3F8;
-        text-align:left;
-        padding:10px 12px;
-        font-weight:900;
-        border-bottom:1px solid #E6EAF2;
-        }
-        table.iaid-table tbody td{
-        padding:10px 12px;
-        border-bottom:1px solid #F2F4F8;
-        vertical-align: top;
-        }
-        table.iaid-table tbody tr:hover{
-        background:#FAFBFE;
-        }
+div[data-testid="stMetric"] > div{
+  background: #FFFFFF;
+  border: 1px solid #E6EAF2;
+  padding: 14px 16px;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(14, 30, 37, 0.06);
+}
 
+div[data-testid="stMetricLabel"] p{
+  font-weight: 800 !important;
+  opacity: 0.85;
+}
 
-    </style>
-    """,
-    unsafe_allow_html=True
+div[data-testid="stMetricValue"]{
+  font-weight: 900 !important;
+}
+
+/* =========================================================
+   4) TABS
+   ========================================================= */
+button[data-baseweb="tab"]{
+  font-weight: 800 !important;
+  letter-spacing: 0.2px;
+}
+
+/* =========================================================
+   5) DATAFRAMES / TABLES STREAMLIT
+   ========================================================= */
+div[data-testid="stDataFrame"]{
+  background: #FFFFFF;
+  border: 1px solid #E6EAF2;
+  border-radius: 18px;
+  padding: 6px;
+  box-shadow: 0 10px 24px rgba(14, 30, 37, 0.04);
+}
+
+/* =========================================================
+   6) BUTTONS (download + normal)
+   ========================================================= */
+.stDownloadButton button,
+.stButton button{
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  font-weight: 800 !important;
+}
+
+/* =========================================================
+   7) BADGES (HTML)
+   ========================================================= */
+.badge{
+  display:inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  border: 1px solid #E6EAF2;
+  white-space: nowrap;
+}
+
+.badge-ok{ background:#E9F7EF; color:#145A32; }
+.badge-warn{ background:#FEF5E7; color:#7D6608; }
+.badge-bad{ background:#FDEDEC; color:#922B21; }
+
+/* =========================================================
+   8) HOVER EFFECTS (cards + dataframes)
+   ========================================================= */
+.iaid-banner,
+div[data-testid="stMetric"] > div,
+div[data-testid="stDataFrame"]{
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+div[data-testid="stMetric"] > div:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.10);
+}
+
+div[data-testid="stDataFrame"]:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.08);
+}
+
+/* =========================================================
+   9) HTML TABLE (badges) — top retards
+   ========================================================= */
+.table-wrap{
+  overflow-x:auto;
+  border:1px solid #E6EAF2;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 10px 24px rgba(14,30,37,0.04);
+}
+
+/* table générée par pandas.to_html(..., classes="iaid-table") */
+table.iaid-table{
+  width:100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table.iaid-table thead th{
+  background:#F0F3F8;
+  text-align:left;
+  padding:10px 12px;
+  font-weight:900;
+  border-bottom:1px solid #E6EAF2;
+}
+
+table.iaid-table tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid #F2F4F8;
+  vertical-align: top;
+}
+
+table.iaid-table tbody tr:hover{
+  background:#FAFBFE;
+}
+</style>
+""",
+unsafe_allow_html=True
 )
+
 
 
 st.markdown(
