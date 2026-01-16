@@ -374,7 +374,7 @@ section[data-testid="stSidebar"]{
   border: 1px solid rgba(227,232,240,0.9);
   box-shadow: 0 10px 24px rgba(14,30,37,0.08);
   background: #fff;
-  padding: 6px;
+  padding: 6px;}
 /* -----------------------------
    INPUTS (lisibilité ++)
 ------------------------------*/
@@ -994,37 +994,37 @@ def sidebar_card_end():
 
 
 with st.sidebar:
-    import base64
     logo_header = st.file_uploader(
-    "Logo institutionnel (sidebar + header)",
-    type=["png","jpg","jpeg"],
-    key="logo_header")
+        "Logo institutionnel (sidebar + header)",
+        type=["png","jpg","jpeg"],
+        key="logo_header"
+    )
 
-    logo_html = make_logo_html(logo_header)  # ✅ ICI on définit logo_html
+    logo_html = make_logo_html(logo_header)  # ✅ définit toujours logo_html
 
-
+    # ✅ affiche le logo si upload
     if logo_header is not None:
         st.markdown(
             f"""
             <div class="sidebar-logo-wrap">
-            {logo_html}
+              {logo_html}
             </div>
             """,
             unsafe_allow_html=True
         )
-
-
-        # ✅ LOGO DANS LA SIDEBAR
+    else:
+        # optionnel: petit fallback visuel
         st.markdown(
-            f"""
-            <div class="sidebar-logo-wrap">
-            <img src="data:image/{mime};base64,{logo_b64}" />
+            """
+            <div class="sidebar-logo-wrap" style="font-weight:950;color:#0B3D91;font-size:18px;">
+              IAID
             </div>
             """,
             unsafe_allow_html=True
         )
 
     st.divider()
+
 
     # =========================================================
     # 1) IMPORT & PARAMETRES
