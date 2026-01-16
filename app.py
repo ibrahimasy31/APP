@@ -35,6 +35,19 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+import base64
+
+def make_logo_html(uploaded_file) -> str:
+    # fallback si pas de logo
+    if uploaded_file is None:
+        return "IAID"
+
+    ext = uploaded_file.name.split(".")[-1].lower()
+    mime = "png" if ext == "png" else "jpeg"
+    logo_b64 = base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
+    return f'<img src="data:image/{mime};base64,{logo_b64}" />'
+
+
 st.set_page_config(
     page_title="IAID — Suivi des classes (Dashboard)",
     layout="wide",
@@ -969,36 +982,6 @@ def build_pdf_report(
     doc.build(story)
     return out.getvalue()
 
-
-now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
-
-st.markdown(
-f"""
-<div class="iaid-header">
-  <div class="iaid-hrow">
-    <div class="iaid-hleft">
-      <div class="iaid-logo">{logo_html}</div>
-      <div>
-        <div class="iaid-htitle">Département IA &amp; Ingénierie des Données (IAID)</div>
-        <div class="iaid-hsub">Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière</div>
-      </div>
-    </div>
-    <div class="iaid-meta">
-      <div>Dernière mise à jour</div>
-      <div style="font-size:13px;font-weight:950;">{now_str}</div>
-    </div>
-  </div>
-
-  <div class="iaid-badges">
-    <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
-    <div class="iaid-badge">KPIs • Alertes • Qualité</div>
-    <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
-  </div>
-</div>
-""",
-unsafe_allow_html=True
-)
-
 # -----------------------------
 # UI
 # -----------------------------
@@ -1013,17 +996,23 @@ def sidebar_card_end():
 with st.sidebar:
     import base64
     logo_header = st.file_uploader(
-        "Logo institutionnel (sidebar + header)",
-        type=["png","jpg","jpeg"],
-        key="logo_header"
-    )
+    "Logo institutionnel (sidebar + header)",
+    type=["png","jpg","jpeg"],
+    key="logo_header")
 
-    logo_html = "IAID"   # fallback texte si pas de logo
+    logo_html = make_logo_html(logo_header)  # ✅ ICI on définit logo_html
+
 
     if logo_header is not None:
-        ext = logo_header.name.split(".")[-1].lower()
-        mime = "png" if ext == "png" else "jpeg"
-        logo_b64 = base64.b64encode(logo_header.getvalue()).decode("utf-8")
+        st.markdown(
+            f"""
+            <div class="sidebar-logo-wrap">
+            {logo_html}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
 
         # ✅ LOGO DANS LA SIDEBAR
         st.markdown(
@@ -1195,6 +1184,36 @@ with st.sidebar:
             st.error(f"Auto-envoi échoué: {e}")
 
     sidebar_card_end()
+
+
+now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+st.markdown(
+f"""
+<div class="iaid-header">
+  <div class="iaid-hrow">
+    <div class="iaid-hleft">
+      <div class="iaid-logo">{logo_html}</div>
+      <div>
+        <div class="iaid-htitle">Département IA &amp; Ingénierie des Données (IAID)</div>
+        <div class="iaid-hsub">Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière</div>
+      </div>
+    </div>
+    <div class="iaid-meta">
+      <div>Dernière mise à jour</div>
+      <div style="font-size:13px;font-weight:950;">{now_str}</div>
+    </div>
+  </div>
+
+  <div class="iaid-badges">
+    <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+    <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+    <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
+  </div>
+</div>
+""",
+unsafe_allow_html=True
+)
 
 
 
