@@ -187,6 +187,37 @@ st.markdown(
         box-shadow: 0 14px 30px rgba(14,30,37,0.10);
         }
 
+        /* ============ HTML TABLE (badges) ============ */
+/* ============ HTML TABLE (badges) ============ */
+        .table-wrap{
+        overflow-x:auto;
+        border:1px solid #E6EAF2;
+        border-radius:18px;
+        background:#fff;
+        box-shadow:0 10px 24px rgba(14,30,37,0.04);
+        }
+        table.iaid-table{
+        width:100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        }
+        table.iaid-table thead th{
+        background:#F0F3F8;
+        text-align:left;
+        padding:10px 12px;
+        font-weight:900;
+        border-bottom:1px solid #E6EAF2;
+        }
+        table.iaid-table tbody td{
+        padding:10px 12px;
+        border-bottom:1px solid #F2F4F8;
+        vertical-align: top;
+        }
+        table.iaid-table tbody tr:hover{
+        background:#FAFBFE;
+        }
+
+
     </style>
     """,
     unsafe_allow_html=True
@@ -746,6 +777,11 @@ if file_bytes is None:
     st.info("➡️ Fournis une source (URL auto via Secrets ou Upload manuel).")
     st.stop()
 
+# 🔄 Auto-refresh propre (Streamlit Cloud) — placé tôt pour éviter double rendering
+if import_mode == "URL (auto)" and auto_refresh:
+    st_autorefresh(interval=refresh_sec * 1000, key="iaid_refresh")
+
+
 st.caption(f"Source active : **{source_label}**")
 
 df, quality = load_excel_all_sheets(file_bytes)
@@ -858,6 +894,12 @@ if show_only_delay:
 # Dataset final (sans Enseignant/Type)
 # -----------------------------
 filtered = filtered_base.copy()
+# ✅ Classes réellement disponibles après filtres (important pour l'onglet "Par classe")
+classes_filtered = sorted(filtered["Classe"].dropna().unique().tolist())
+if not classes_filtered:
+    # fallback si filtre vide
+    classes_filtered = sorted(df_period["Classe"].dropna().unique().tolist())
+
 
 # -----------------------------
 # Onglets (Ultra)
@@ -943,11 +985,12 @@ with tab_overview:
     top_retards_badged = add_badges(top_retards)
 
     # Affichage "pro" avec badge (HTML)
-    st.markdown(
-        top_retards_badged[["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]]
-        .to_html(escape=False, index=False),
-        unsafe_allow_html=True
-    )
+    html_table = top_retards_badged[
+        ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]
+    ].to_html(escape=False, index=False, classes="iaid-table")
+
+    st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
+
 
     # + une version dataframe colorée (optionnel, très utile)
     st.dataframe(
@@ -971,8 +1014,13 @@ with tab_classes:
 
     colA, colB = st.columns([2, 1])
     with colB:
-        cls1 = st.selectbox("Comparer classe A", classes, index=0)
-        cls2 = st.selectbox("avec classe B", classes, index=min(1, len(classes)-1) if len(classes) > 1 else 0)
+        cls1 = st.selectbox("Comparer classe A", classes_filtered, index=0)
+        cls2 = st.selectbox(
+            "avec classe B",
+            classes_filtered,
+            index=min(1, len(classes_filtered) - 1) if len(classes_filtered) > 1 else 0
+        )
+
 
     with colA:
         st.write("### Tableau synthèse par classe")
@@ -1230,6 +1278,3 @@ with tab_export:
         )
 
 st.caption("✅ Astuce : standardise les colonnes sur toutes les feuilles. L’app calcule automatiquement VHR/Écart/Taux/Statut selon la période sélectionnée.")
-# 🔄 Auto-refresh propre (Streamlit Cloud)
-if import_mode == "URL (auto)" and auto_refresh:
-    st_autorefresh(interval=refresh_sec * 1000, key="iaid_refresh")
