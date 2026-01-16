@@ -256,27 +256,6 @@ unsafe_allow_html=True
 
 
 
-st.markdown(
-    """
-<div class="iaid-hero">
-  <div class="iaid-hero-top">
-    <div>
-      <div class="iaid-hero-title">Département IA &amp; Ingénierie des Données (IAID)</div>
-      <div class="iaid-hero-sub">
-        Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière
-      </div>
-      <div class="iaid-chip-row">
-        <div class="iaid-chip">Excel multi-feuilles → consolidation automatique</div>
-        <div class="iaid-chip">KPIs • Alertes • Qualité</div>
-        <div class="iaid-chip">Exports : PDF officiel + Excel consolidé</div>
-      </div>
-    </div>
-  </div>
-</div>
-    """,
-    unsafe_allow_html=True
-)
-
 
 
 # -----------------------------
@@ -685,14 +664,15 @@ def build_pdf_report(
 # ===== HEADER PREMIUM =====
 logo_header = st.sidebar.file_uploader("Logo (pour header)", type=["png","jpg","jpeg"], key="logo_header")
 
-logo_html = ""
+import base64
+
+logo_html = "IAID"
 if logo_header is not None:
-    import base64
+    ext = logo_header.name.split(".")[-1].lower()
+    mime = "png" if ext == "png" else "jpeg"
     logo_b64 = base64.b64encode(logo_header.getvalue()).decode("utf-8")
-    logo_html = f'<img src="data:image/png;base64,{logo_b64}" />'
-else:
-    # fallback sans image
-    logo_html = "IAID"
+    logo_html = f'<img src="data:image/{mime};base64,{logo_b64}" />'
+
 
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
