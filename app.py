@@ -272,17 +272,22 @@ st.markdown(
    VARIABLES
 ------------------------------*/
 :root{
-  --blue:#1A237E;
-  --blue2:#283593;
-  --blue3:#3949AB;
+  --bg:#F6F8FC;
+  --bg2:#EEF3FA;
+  --card:#FFFFFF;
+  --text:#0F172A;
+  --muted:#475569;
+  --line:#E3E8F0;
 
-  --ok:#2E7D32;
-  --warn:#6A1B9A;
-  --bad:#B71C1C;
+  --blue:#0B3D91;
+  --blue2:#134FA8;
+  --blue3:#1F6FEB;
 
-  --focus:#9FA8DA;
+  --ok:#1E8E3E;
+  --warn:#F29900;
+  --bad:#D93025;
 
-
+  --focus:#5AA2FF;
 }
 
 /* -----------------------------
