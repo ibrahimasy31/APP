@@ -726,8 +726,7 @@ unsafe_allow_html=True
 # -----------------------------
 # UI
 # -----------------------------
-st.markdown("### 📊 Suivi mensuel des enseignements")
-st.caption("Consolidation automatique à partir des feuilles Excel (1 feuille = 1 classe).")
+
 def sidebar_card(title: str):
     st.markdown(f'<div class="sidebar-card"><div style="font-weight:950;font-size:14px;margin-bottom:10px;">{title}</div>', unsafe_allow_html=True)
 
