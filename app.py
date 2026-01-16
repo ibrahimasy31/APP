@@ -41,6 +41,19 @@ st.set_page_config(
     page_icon="📊",
 )
 
+# =========================
+# THEME SWITCH (DG Clair / DG Sombre)
+# =========================
+if "dg_dark" not in st.session_state:
+    st.session_state.dg_dark = False  # défaut : Clair
+
+with st.sidebar:
+    st.markdown("### 🎛️ Thème")
+    st.toggle("Mode DG Sombre", key="dg_dark", help="Basculer entre thème clair et sombre (lisible partout).")
+
+DG_DARK = bool(st.session_state.dg_dark)
+
+
 # st.markdown(
 # """
 # <style>
@@ -255,179 +268,472 @@ st.set_page_config(
 # )
 
 
-st.markdown(
-"""
+# st.markdown(
+# """
+# <style>
+# /* =========================================================
+#    IAID — THÈME BLEU EXÉCUTIF DG
+#    Lisibilité absolue • Sobriété • Institutionnel
+#    ========================================================= */
+
+# /* ===== RESET & SÉCURITÉ TEXTE ===== */
+# body, .stApp, p, span, div, label {
+#   color: #0F172A !important; /* slate-900 */
+# }
+# h1, h2, h3, h4, h5 {
+#   color: #0B3D91 !important;
+#   font-weight: 800 !important;
+# }
+
+# /* ===== ESPACEMENT STREAMLIT ===== */
+# .block-container{
+#   padding-top: .25rem !important;
+#   padding-bottom: 2rem !important;
+# }
+# header[data-testid="stHeader"],
+# div[data-testid="stToolbar"]{
+#   visibility: hidden !important;
+#   height: 0px !important;
+# }
+
+# /* ===== BACKGROUND GLOBAL (SAFE) ===== */
+# .stApp{
+#   background:
+#     linear-gradient(180deg, #F4F7FB 0%, #EEF3FA 40%, #F6F8FC 100%);
+# }
+
+# /* ===== SIDEBAR ===== */
+# section[data-testid="stSidebar"]{
+#   background: #FFFFFF !important;
+#   border-right: 1px solid #E3E8F0;
+# }
+# .sidebar-card{
+#   background: #FFFFFF;
+#   border: 1px solid #E3E8F0;
+#   border-radius: 16px;
+#   padding: 12px;
+#   margin-bottom: 10px;
+#   box-shadow: 0 6px 18px rgba(14,30,37,0.05);
+# }
+
+# /* ===== HEADER DG ===== */
+# .iaid-header{
+#   background: linear-gradient(90deg, #0B3D91 0%, #134FA8 50%, #1F6FEB 100%);
+#   color: #FFFFFF !important;
+#   padding: 18px 22px;
+#   border-radius: 18px;
+#   box-shadow: 0 16px 36px rgba(14,30,37,0.20);
+#   margin-bottom: 16px;
+# }
+# .iaid-header *{
+#   color: #FFFFFF !important;
+#   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+# }
+# .iaid-htitle{
+#   font-size: 20px;
+#   font-weight: 900;
+# }
+# .iaid-hsub{
+#   font-size: 13px;
+#   opacity: .95;
+#   margin-top: 4px;
+# }
+# .iaid-badges{
+#   margin-top: 10px;
+#   display: flex;
+#   gap: 8px;
+#   flex-wrap: wrap;
+# }
+# .iaid-badge{
+#   background: rgba(255,255,255,0.20);
+#   border: 1px solid rgba(255,255,255,0.35);
+#   padding: 6px 10px;
+#   border-radius: 999px;
+#   font-size: 12px;
+#   font-weight: 800;
+# }
+
+# /* ===== KPI CARDS ===== */
+# .kpi-grid{
+#   display: grid;
+#   grid-template-columns: repeat(5, minmax(0,1fr));
+#   gap: 12px;
+#   margin-top: 6px;
+# }
+# .kpi{
+#   background: #FFFFFF;
+#   border: 1px solid #E3E8F0;
+#   border-radius: 18px;
+#   padding: 14px 16px;
+#   box-shadow: 0 10px 24px rgba(14,30,37,0.06);
+#   position: relative;
+# }
+# .kpi:before{
+#   content:"";
+#   position:absolute;
+#   top:0; left:0;
+#   width:100%; height:4px;
+#   background: #0B3D91;
+# }
+# .kpi-title{
+#   font-size: 12px;
+#   font-weight: 800;
+#   opacity: .75;
+# }
+# .kpi-value{
+#   font-size: 22px;
+#   font-weight: 900;
+#   margin-top: 6px;
+# }
+# .kpi-good:before{ background:#1E8E3E; }
+# .kpi-warn:before{ background:#F29900; }
+# .kpi-bad:before{ background:#D93025; }
+
+# /* ===== TABS ===== */
+# button[data-baseweb="tab"]{
+#   background: #FFFFFF !important;
+#   color: #0F172A !important;
+#   border-radius: 999px !important;
+#   padding: 10px 14px !important;
+#   font-weight: 800 !important;
+#   border: 1px solid #E3E8F0 !important;
+# }
+# button[data-baseweb="tab"][aria-selected="true"]{
+#   background: #EAF1FF !important;
+#   color: #0B3D91 !important;
+#   border: 1px solid #0B3D91 !important;
+# }
+
+# /* ===== DATAFRAMES ===== */
+# div[data-testid="stDataFrame"]{
+#   background: #FFFFFF;
+#   border: 1px solid #E3E8F0;
+#   border-radius: 16px;
+#   padding: 6px;
+#   box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+# }
+
+# /* ===== TABLE HTML ===== */
+# .table-wrap{
+#   background: #FFFFFF;
+#   border: 1px solid #E3E8F0;
+#   border-radius: 16px;
+#   box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+# }
+# table.iaid-table thead th{
+#   background: #F1F5FB;
+#   font-weight: 900;
+# }
+
+# /* ===== BOUTONS ===== */
+# .stButton button, .stDownloadButton button{
+#   background: #0B3D91;
+#   color: #FFFFFF !important;
+#   font-weight: 800;
+#   border-radius: 14px;
+#   border: none;
+# }
+# .stButton button:hover, .stDownloadButton button:hover{
+#   background: #134FA8;
+# }
+# </style>
+# """,
+# unsafe_allow_html=True
+# )
+
+# =========================
+# CSS THEME (LIGHT / DARK)
+# =========================
+LIGHT_CSS = """
 <style>
-/* =========================================================
-   IAID — THÈME BLEU EXÉCUTIF DG
-   Lisibilité absolue • Sobriété • Institutionnel
-   ========================================================= */
+/* --- Layout / hide Streamlit top bar --- */
+.block-container{ padding-top: .20rem !important; padding-bottom: 2rem !important; }
+header[data-testid="stHeader"]{ background: transparent !important; height: 0px !important; }
+div[data-testid="stToolbar"]{ visibility: hidden !important; height: 0px !important; position: fixed !important; }
 
-/* ===== RESET & SÉCURITÉ TEXTE ===== */
-body, .stApp, p, span, div, label {
-  color: #0F172A !important; /* slate-900 */
-}
-h1, h2, h3, h4, h5 {
-  color: #0B3D91 !important;
-  font-weight: 800 !important;
-}
-
-/* ===== ESPACEMENT STREAMLIT ===== */
-.block-container{
-  padding-top: .25rem !important;
-  padding-bottom: 2rem !important;
-}
-header[data-testid="stHeader"],
-div[data-testid="stToolbar"]{
-  visibility: hidden !important;
-  height: 0px !important;
-}
-
-/* ===== BACKGROUND GLOBAL (SAFE) ===== */
+/* --- Base (LIGHT) --- */
 .stApp{
-  background:
-    linear-gradient(180deg, #F4F7FB 0%, #EEF3FA 40%, #F6F8FC 100%);
+  background: radial-gradient(1200px 600px at 10% 0%, rgba(31,111,235,0.10), transparent 55%),
+              radial-gradient(1200px 600px at 90% 0%, rgba(11,61,145,0.10), transparent 55%),
+              #F6F8FC;
+  color:#0F172A;
 }
+body, p, span, div, label { color:#0F172A; }
 
-/* ===== SIDEBAR ===== */
+/* Sidebar */
 section[data-testid="stSidebar"]{
-  background: #FFFFFF !important;
-  border-right: 1px solid #E3E8F0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFF 100%);
+  border-right: 1px solid rgba(230,234,242,0.9);
 }
 .sidebar-card{
   background: #FFFFFF;
-  border: 1px solid #E3E8F0;
-  border-radius: 16px;
-  padding: 12px;
+  border: 1px solid rgba(230,234,242,0.95);
+  border-radius: 18px;
+  padding: 12px 12px;
+  box-shadow: 0 10px 22px rgba(14,30,37,0.05);
   margin-bottom: 10px;
-  box-shadow: 0 6px 18px rgba(14,30,37,0.05);
 }
 
-/* ===== HEADER DG ===== */
+/* Header */
 .iaid-header{
-  background: linear-gradient(90deg, #0B3D91 0%, #134FA8 50%, #1F6FEB 100%);
-  color: #FFFFFF !important;
-  padding: 18px 22px;
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
-  margin-bottom: 16px;
+  background: linear-gradient(100deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
+  color:#fff;
+  padding: 18px 20px;
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(14,30,37,0.14);
+  position: relative;
+  overflow:hidden;
+  margin: 0 0 14px 0;
 }
-.iaid-header *{
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+.iaid-header:before{
+  content:"";
+  position:absolute; top:-45%; left:-25%;
+  width:70%; height:220%;
+  transform: rotate(18deg);
+  background: rgba(255,255,255,0.10);
 }
-.iaid-htitle{
-  font-size: 20px;
-  font-weight: 900;
+.iaid-header:after{
+  content:"";
+  position:absolute; right:-120px; top:-120px;
+  width:260px; height:260px; border-radius:50%;
+  background: rgba(255,255,255,0.10);
 }
-.iaid-hsub{
-  font-size: 13px;
-  opacity: .95;
-  margin-top: 4px;
+.iaid-hrow{ display:flex; gap:14px; align-items:center; justify-content:space-between; position:relative; }
+.iaid-hleft{ display:flex; gap:14px; align-items:center; }
+.iaid-logo{
+  width:54px; height:54px; border-radius:16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
 }
-.iaid-badges{
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.iaid-logo img{ width:100%; height:100%; object-fit:cover; }
+.iaid-htitle{ font-size:20px; font-weight:950; letter-spacing:.3px; }
+.iaid-hsub{ margin-top:6px; font-size:13px; opacity:.95; line-height:1.35; }
+.iaid-meta{ text-align:right; font-size:12px; opacity:.95; font-weight:800; }
+.iaid-badges{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; position:relative; }
 .iaid-badge{
-  background: rgba(255,255,255,0.20);
-  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 850;
+  backdrop-filter: blur(6px);
 }
 
-/* ===== KPI CARDS ===== */
-.kpi-grid{
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0,1fr));
-  gap: 12px;
-  margin-top: 6px;
+/* Buttons */
+.stDownloadButton button, .stButton button{
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
+  font-weight: 850 !important;
+  border: 1px solid rgba(230,234,242,0.95) !important;
+  box-shadow: 0 10px 22px rgba(14,30,37,0.06);
 }
-.kpi{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
-  border-radius: 18px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.06);
-  position: relative;
+.stDownloadButton button:hover, .stButton button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.10);
 }
-.kpi:before{
-  content:"";
-  position:absolute;
-  top:0; left:0;
-  width:100%; height:4px;
-  background: #0B3D91;
-}
-.kpi-title{
-  font-size: 12px;
-  font-weight: 800;
-  opacity: .75;
-}
-.kpi-value{
-  font-size: 22px;
-  font-weight: 900;
-  margin-top: 6px;
-}
-.kpi-good:before{ background:#1E8E3E; }
-.kpi-warn:before{ background:#F29900; }
-.kpi-bad:before{ background:#D93025; }
 
-/* ===== TABS ===== */
+/* Tabs */
+div[data-baseweb="tab-list"]{ gap: 8px !important; }
 button[data-baseweb="tab"]{
-  background: #FFFFFF !important;
-  color: #0F172A !important;
   border-radius: 999px !important;
   padding: 10px 14px !important;
-  font-weight: 800 !important;
-  border: 1px solid #E3E8F0 !important;
+  font-weight: 850 !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(230,234,242,0.95) !important;
+  box-shadow: 0 10px 22px rgba(14,30,37,0.04);
 }
 button[data-baseweb="tab"][aria-selected="true"]{
-  background: #EAF1FF !important;
-  color: #0B3D91 !important;
-  border: 1px solid #0B3D91 !important;
+  background: linear-gradient(90deg, rgba(11,61,145,0.12), rgba(31,111,235,0.12)) !important;
+  border: 1px solid rgba(31,111,235,0.35) !important;
 }
 
-/* ===== DATAFRAMES ===== */
+/* Dataframes */
 div[data-testid="stDataFrame"]{
   background: #FFFFFF;
-  border: 1px solid #E3E8F0;
-  border-radius: 16px;
+  border: 1px solid rgba(230,234,242,0.95);
+  border-radius: 20px;
   padding: 6px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+  box-shadow: 0 12px 26px rgba(14, 30, 37, 0.05);
 }
 
-/* ===== TABLE HTML ===== */
+/* KPI cards */
+.kpi-grid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin-top:6px; }
+.kpi{
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFF 100%);
+  border: 1px solid rgba(230,234,242,0.95);
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 26px rgba(14,30,37,0.07);
+  position: relative; overflow: hidden;
+  color:#0F172A;
+}
+.kpi:before{
+  content:""; position:absolute; left:0; top:0; width:100%; height:3px;
+  background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
+  opacity:.95;
+}
+.kpi .label{ font-weight: 900; opacity:.75; font-size:12px; }
+.kpi .value{ font-weight: 950; font-size:22px; margin-top:6px; }
+.kpi-good:before{ background: linear-gradient(90deg, #1E8E3E, #34A853) !important; }
+.kpi-warn:before{ background: linear-gradient(90deg, #F29900, #F6B100) !important; }
+.kpi-bad:before{ background: linear-gradient(90deg, #D93025, #EA4335) !important; }
+
+/* Table HTML */
 .table-wrap{
-  background: #FFFFFF;
-  border: 1px solid #E3E8F0;
-  border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.05);
+  overflow-x:auto;
+  border:1px solid rgba(230,234,242,0.95);
+  border-radius:20px;
+  background:#fff;
+  box-shadow: 0 12px 26px rgba(14,30,37,0.05);
 }
+table.iaid-table{ width:100%; border-collapse:collapse; font-size:12px; color:#0F172A; }
 table.iaid-table thead th{
-  background: #F1F5FB;
-  font-weight: 900;
+  background: linear-gradient(180deg, #F3F6FB 0%, #EEF2F8 100%);
+  text-align:left; padding:10px 12px; font-weight:900;
+  border-bottom:1px solid rgba(230,234,242,0.95);
 }
+table.iaid-table tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(242,244,248,0.95);
+  vertical-align: top;
+}
+table.iaid-table tbody tr:hover{ background:#FAFBFE; }
 
-/* ===== BOUTONS ===== */
-.stButton button, .stDownloadButton button{
-  background: #0B3D91;
-  color: #FFFFFF !important;
-  font-weight: 800;
-  border-radius: 14px;
-  border: none;
-}
-.stButton button:hover, .stDownloadButton button:hover{
-  background: #134FA8;
-}
+/* Hover */
+.kpi, .iaid-header, div[data-testid="stDataFrame"]{ transition: transform .12s ease, box-shadow .12s ease; }
+.iaid-header:hover{ transform: translateY(-1px); box-shadow: 0 22px 50px rgba(14,30,37,0.18); }
+.kpi:hover{ transform: translateY(-2px); box-shadow: 0 18px 40px rgba(14,30,37,0.11); }
 </style>
-""",
-unsafe_allow_html=True
-)
+"""
 
+DARK_CSS = """
+<style>
+/* --- Layout / hide Streamlit top bar --- */
+.block-container{ padding-top: .20rem !important; padding-bottom: 2rem !important; }
+header[data-testid="stHeader"]{ background: transparent !important; height: 0px !important; }
+div[data-testid="stToolbar"]{ visibility: hidden !important; height: 0px !important; position: fixed !important; }
+
+/* --- Base (DARK SAFE) --- */
+.stApp{
+  background: linear-gradient(180deg, #0F172A 0%, #111827 40%, #020617 100%);
+}
+body, .stApp, p, span, div, label { color: #E5E7EB !important; }
+h1, h2, h3, h4, h5 { color: #EAF1FF !important; }
+
+/* Sidebar */
+section[data-testid="stSidebar"]{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  border-right: 1px solid rgba(255,255,255,0.10);
+}
+.sidebar-card{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 12px 12px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+  margin-bottom: 10px;
+}
+
+/* Header (reste bleu institutionnel, mais contraste renforcé) */
+.iaid-header{
+  background: linear-gradient(100deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
+  color:#fff !important;
+  padding: 18px 20px;
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.35);
+  position: relative;
+  overflow:hidden;
+  margin: 0 0 14px 0;
+}
+.iaid-header:before{
+  content:"";
+  position:absolute; top:-45%; left:-25%;
+  width:70%; height:220%;
+  transform: rotate(18deg);
+  background: rgba(255,255,255,0.10);
+}
+.iaid-header:after{
+  content:"";
+  position:absolute; right:-120px; top:-120px;
+  width:260px; height:260px; border-radius:50%;
+  background: rgba(255,255,255,0.10);
+}
+.iaid-hrow{ display:flex; gap:14px; align-items:center; justify-content:space-between; position:relative; }
+.iaid-hleft{ display:flex; gap:14px; align-items:center; }
+.iaid-logo{
+  width:54px; height:54px; border-radius:16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.iaid-logo img{ width:100%; height:100%; object-fit:cover; }
+.iaid-meta{ text-align:right; font-size:12px; opacity:.95; font-weight:800; }
+.iaid-badges{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; position:relative; }
+.iaid-badge{
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  backdrop-filter: blur(6px);
+  color:#fff !important;
+}
+
+/* Buttons */
+.stDownloadButton button, .stButton button{
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
+  font-weight: 850 !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.28);
+}
+
+/* Tabs */
+div[data-baseweb="tab-list"]{ gap: 8px !important; }
+button[data-baseweb="tab"]{
+  border-radius: 999px !important;
+  padding: 10px 14px !important;
+  font-weight: 850 !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+  color:#EAF1FF !important;
+}
+button[data-baseweb="tab"][aria-selected="true"]{
+  background: linear-gradient(90deg, rgba(31,111,235,0.22), rgba(90,162,255,0.18)) !important;
+  border: 1px solid rgba(90,162,255,0.40) !important;
+}
+
+/* IMPORTANT: cartes & tables en BLANC pour lisibilité */
+.kpi,
+div[data-testid="stDataFrame"],
+.table-wrap{
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid rgba(230,234,242,0.95) !important;
+  border-radius: 20px !important;
+}
+table.iaid-table{ color:#0F172A !important; }
+table.iaid-table thead th{ background:#EEF2F8 !important; }
+table.iaid-table tbody tr:hover{ background:#FAFBFE !important; }
+
+/* KPI top bar */
+.kpi:before{
+  content:""; position:absolute; left:0; top:0; width:100%; height:3px;
+  background: linear-gradient(90deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%) !important;
+}
+.kpi-good:before{ background: linear-gradient(90deg, #1E8E3E, #34A853) !important; }
+.kpi-warn:before{ background: linear-gradient(90deg, #F29900, #F6B100) !important; }
+.kpi-bad:before{ background: linear-gradient(90deg, #D93025, #EA4335) !important; }
+</style>
+"""
+
+st.markdown(DARK_CSS if DG_DARK else LIGHT_CSS, unsafe_allow_html=True)
 
 
 
