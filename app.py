@@ -37,16 +37,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
 
-def make_logo_html(uploaded_file) -> str:
-    # fallback si pas de logo
-    if uploaded_file is None:
-        return "IAID"
-
-    ext = uploaded_file.name.split(".")[-1].lower()
-    mime = "png" if ext == "png" else "jpeg"
-    logo_b64 = base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
-    return f'<img src="data:image/{mime};base64,{logo_b64}" />'
-
 
 st.set_page_config(
     page_title="IAID — Suivi des classes (Dashboard)",
@@ -994,30 +984,19 @@ def sidebar_card_end():
 
 
 with st.sidebar:
-    logo_header = st.file_uploader(
-        "Logo institutionnel (sidebar + header)",
-        type=["png","jpg","jpeg"],
-        key="logo_header"
-    )
+    from pathlib import Path
 
-    logo_html = make_logo_html(logo_header)  # ✅ définit toujours logo_html
+    LOGO_PATH = Path("assets/logo_iaid.png")
 
-    # ✅ affiche le logo si upload
-    if logo_header is not None:
-        st.markdown(
-            f"""
-            <div class="sidebar-logo-wrap">
-              {logo_html}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    if LOGO_PATH.exists():
+        st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
+        st.image(str(LOGO_PATH), width=130)
+        st.markdown('</div>', unsafe_allow_html=True)
     else:
-        # optionnel: petit fallback visuel
         st.markdown(
             """
             <div class="sidebar-logo-wrap" style="font-weight:950;color:#0B3D91;font-size:18px;">
-              IAID
+            IAID
             </div>
             """,
             unsafe_allow_html=True
@@ -1699,12 +1678,7 @@ with tab_export:
         "Synthese_Classes": synth_class,
     })
 
-    st.download_button(
-        "⬇️ Télécharger Excel consolidé",
-        data=xbytes,
-        file_name=f"{export_prefix}_consolide.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+   
 
     st.divider()
     st.write("### Export PDF (rapport mensuel officiel)")
