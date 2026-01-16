@@ -986,21 +986,14 @@ def sidebar_card_end():
 with st.sidebar:
     from pathlib import Path
 
-    LOGO_PATH = Path("assets/logo_iaid.png")
+    LOGO_PATH = Path("assets/logo_iaid.jpg")  # ou .jpeg
 
-    if LOGO_PATH.exists():
+    if not LOGO_PATH.exists():
+        st.error("❌ Logo manquant : assets/logo_iaid.jpg")
+    else:
         st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
         st.image(str(LOGO_PATH), width=130)
         st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(
-            """
-            <div class="sidebar-logo-wrap" style="font-weight:950;color:#0B3D91;font-size:18px;">
-            IAID
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
     st.divider()
 
