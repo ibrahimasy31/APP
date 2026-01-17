@@ -538,9 +538,21 @@ div[data-testid="stAlert"] *{
   padding: 10px 16px !important;
 }
 
-/* TEXTE INTERNE — OBLIGATOIRE */
+/* TEXTE INTERNE — FIX STREAMLIT (span / p / div selon versions) */
 .stButton button span,
-.stDownloadButton button span{
+.stButton button p,
+.stButton button div,
+.stDownloadButton button span,
+.stDownloadButton button p,
+.stDownloadButton button div{
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+}
+
+/* Cas où Streamlit applique une classe "primary" */
+button[kind="primary"] span,
+button[kind="primary"] p,
+button[kind="primary"] div{
   color: #FFFFFF !important;
   font-weight: 900 !important;
 }
