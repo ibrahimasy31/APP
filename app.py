@@ -777,11 +777,16 @@ def df_to_excel_bytes(sheets: Dict[str, pd.DataFrame]) -> bytes:
             sheet_df.to_excel(writer, sheet_name=name[:31], index=False)
     return output.getvalue()
 
-@st.cache_data(show_spinner=False, ttl=60)  # cache 60 sec
+@st.cache_data(show_spinner=False, ttl=600)  # 10 minutes au lieu de 60s
 def fetch_excel_from_url(url: str) -> bytes:
-    r = requests.get(url.strip(), timeout=30)
+    r = requests.get(
+        url.strip(),
+        timeout=30,
+        headers={"Cache-Control": "no-cache"}  # évite certains proxies bizarres
+    )
     r.raise_for_status()
     return r.content
+
 @st.cache_data(show_spinner=False)
 def make_long(df_period: pd.DataFrame) -> pd.DataFrame:
     return unpivot_months(df_period)
@@ -1118,8 +1123,12 @@ with st.sidebar:
     # =========================================================
     sidebar_card("Auto-refresh & Source")
 
-    auto_refresh = st.checkbox("Rafraîchir automatiquement (URL)", value=True)
-    refresh_sec = st.slider("Intervalle (secondes)", 30, 900, 120, 30)
+    auto_refresh = st.checkbox("Rafraîchir automatiquement (URL)", value=False)  # ✅ OFF par défaut
+    refresh_sec = st.slider("Intervalle (secondes)", 30, 900, 300, 30)          # ✅ 300s conseillé
+
+    if st.button("🔄 Rafraîchir maintenant"):
+        st.rerun()
+
 
     if import_mode == "URL (auto)":
         st.caption("Recommandé Streamlit Cloud : lien direct vers un fichier .xlsx")
@@ -1677,12 +1686,12 @@ with tab_overview:
     # garder Taux numérique pour la coloration
     top_retards_badged = add_badges(top_retards)
 
-    # Affichage "pro" avec badge (HTML)
-    html_table = top_retards_badged[
-        ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]
-    ].to_html(escape=False, index=False, classes="iaid-table")
+    # # Affichage "pro" avec badge (HTML)
+    # html_table = top_retards_badged[
+    #     ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]
+    # ].to_html(escape=False, index=False, classes="iaid-table")
 
-    st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
+    # st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
 
 
     # + une version dataframe colorée (optionnel, très utile)
@@ -1821,8 +1830,9 @@ with tab_mensuel:
 
     long = make_long(df_period)
     # Appliquer filtres classes/statuts à la table longue via merge index
-    base_keys = filtered[["_rowid"]].drop_duplicates()
-    long_f = long.merge(base_keys, on="_rowid", how="inner")
+    ids = set(filtered["_rowid"].unique())
+    long_f = long[long["_rowid"].isin(ids)]
+
 
 
     # Heures par mois (total)
@@ -1835,11 +1845,17 @@ with tab_mensuel:
     pivot = long_f.pivot_table(index="Classe", columns="Mois", values="Heures", aggfunc="sum", fill_value=0).reindex(columns=MOIS_COLS)
     st.dataframe(style_table(pivot.reset_index()), use_container_width=True)
 
-    if pivot.shape[0] > 40:
-        st.info("Heatmap désactivée (trop de classes) → filtre une ou deux classes pour l’afficher.")
+    cells = pivot.shape[0] * pivot.shape[1]  # nb classes * nb mois
+    if cells > 250:
+        st.info("Heatmap désactivée (trop de données) → filtre quelques classes.")
     else:
-        fig = px.imshow(pivot.values, x=pivot.columns, y=pivot.index, aspect="auto",
-                        title="Heatmap — Heures par classe et par mois")
+        fig = px.imshow(
+            pivot.values,
+            x=pivot.columns,
+            y=pivot.index,
+            aspect="auto",
+            title="Heatmap — Heures par classe et par mois"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
 
