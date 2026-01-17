@@ -791,7 +791,6 @@ def clear_lock() -> None:
         pass
 
 
-
 def send_email_reminder(
     smtp_host: str,
     smtp_port: int,
@@ -800,17 +799,26 @@ def send_email_reminder(
     sender: str,
     recipients: List[str],
     subject: str,
-    body: str,) -> None:
+    body_text: str,
+    body_html: Optional[str] = None,    
+        ) -> None:
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = sender
     msg["To"] = ", ".join(recipients)
-    msg.set_content(body)
+
+    # 1) Version texte (compatibilité totale)
+    msg.set_content(body_text)
+
+    # 2) Version HTML (si disponible) — “tape à l’œil”
+    if body_html:
+        msg.add_alternative(body_html, subtype="html")
 
     with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as s:
         s.starttls()
         s.login(smtp_user, smtp_pass)
         s.send_message(msg)
+
 
 
 def add_badges(df: pd.DataFrame) -> pd.DataFrame:
@@ -1170,14 +1178,139 @@ with st.sidebar:
 
 
     subject = f"IAID — Rappel mensuel : consulter le Dashboard ({today.strftime('%m/%Y')})"
-    body = (
-        "Bonjour,\n\n"
-        "Rappel mensuel : merci de consulter le dashboard IAID pour le suivi des enseignements.\n\n"
-        f"Lien : {dashboard_url}\n"
-        f"Date : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
-        "Cordialement,\n"
-        "Département IA & Ingénierie des Données (IAID)\n"
-    )
+    body_text = f"""
+    IAID — Notification mensuelle (Pilotage des enseignements)
+
+    Bonjour Madame, Monsieur,
+
+    Veuillez consulter le tableau de bord IAID pour le suivi mensuel des enseignements.
+
+    Lien : {dashboard_url}
+    Période : {today.strftime('%m/%Y')}
+    Généré le : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
+
+    Priorités :
+    - Alertes critiques (retards / non démarré)
+    - Avancement par classe et par matière
+    - Synthèse KPIs + exports PDF/Excel
+
+    Cordialement,
+    Département IA & Ingénierie des Données (IAID)
+    Institut Supérieur Informatique
+    """.strip()
+
+    body_html = f"""
+    <!doctype html>
+    <html>
+    <body style="margin:0;background:#EEF3FA;padding:26px 0;">
+        <div style="max-width:760px;margin:0 auto;border-radius:18px;overflow:hidden;
+                    border:1px solid #D9E2F2;background:#FFFFFF;
+                    box-shadow:0 18px 50px rgba(14,30,37,.10);">
+
+        <!-- HERO -->
+        <div style="padding:22px 26px;color:#fff;
+                    background:linear-gradient(90deg,#0B3D91 0%,#134FA8 45%,#1F6FEB 100%);">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-weight:900;font-size:18px;letter-spacing:.3px;">
+            Département IA &amp; Ingénierie des Données (IAID)
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;opacity:.95;margin-top:6px;">
+            Notification mensuelle — Pilotage des enseignements • {today.strftime('%m/%Y')}
+            </div>
+
+            <div style="margin-top:14px;display:inline-block;
+                        background:rgba(255,255,255,.18);
+                        border:1px solid rgba(255,255,255,.28);
+                        padding:8px 12px;border-radius:999px;
+                        font-family:Arial,Helvetica,sans-serif;font-weight:900;font-size:12px;">
+            Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div style="padding:22px 26px;font-family:Arial,Helvetica,sans-serif;color:#0F172A;line-height:1.55;">
+            <p style="margin:0 0 10px 0;font-size:14px;">
+            Bonjour Madame, Monsieur,
+            </p>
+
+            <p style="margin:0 0 14px 0;font-size:14px;">
+            Dans le cadre du <b>pilotage académique</b>, nous vous invitons à consulter le <b>Dashboard IAID</b>
+            (avancement par classe et par matière, alertes, synthèses et exports officiels).
+            </p>
+
+            <!-- CTA BUTTON -->
+            <div style="margin:16px 0 14px 0;">
+            <a href="{dashboard_url}"
+                style="display:inline-block;background:#0B3D91;color:#FFFFFF;text-decoration:none;
+                        padding:12px 16px;border-radius:12px;font-weight:900;font-size:13px;">
+                Ouvrir le Dashboard IAID →
+            </a>
+            </div>
+
+            <!-- INFO STRIP -->
+            <div style="background:#F6F8FC;border:1px solid #E3E8F0;border-radius:14px;padding:12px 14px;margin:14px 0;">
+            <div style="font-weight:900;color:#0B3D91;margin-bottom:6px;">📌 Informations clés</div>
+            <div style="font-size:13px;"><b>Période :</b> {today.strftime('%m/%Y')}</div>
+            <div style="font-size:13px;"><b>Lien :</b> <a href="{dashboard_url}" style="color:#1F6FEB;text-decoration:none;">{dashboard_url}</a></div>
+            </div>
+
+            <!-- “TOP ACTIONS” -->
+            <div style="margin:16px 0 8px 0;font-weight:950;font-size:14px;color:#0B3D91;">
+            ✅ Actions prioritaires (lecture rapide)
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+            <div style="border:1px solid #E3E8F0;border-radius:14px;padding:12px;background:#FFFFFF;">
+                <div style="font-weight:950;font-size:13px;">🔴 Alertes critiques</div>
+                <div style="font-size:12px;color:#475569;margin-top:6px;">
+                Retards significatifs • Matières non démarrées • Points bloquants
+                </div>
+            </div>
+
+            <div style="border:1px solid #E3E8F0;border-radius:14px;padding:12px;background:#FFFFFF;">
+                <div style="font-weight:950;font-size:13px;">📊 KPIs &amp; synthèses</div>
+                <div style="font-size:12px;color:#475569;margin-top:6px;">
+                Taux moyen • Répartition des statuts • Comparaison par classe
+                </div>
+            </div>
+
+            <div style="border:1px solid #E3E8F0;border-radius:14px;padding:12px;background:#FFFFFF;">
+                <div style="font-weight:950;font-size:13px;">🧭 Drilldown par classe</div>
+                <div style="font-size:12px;color:#475569;margin-top:6px;">
+                Détails par matière • Top retards • Observations
+                </div>
+            </div>
+
+            <div style="border:1px solid #E3E8F0;border-radius:14px;padding:12px;background:#FFFFFF;">
+                <div style="font-weight:950;font-size:13px;">📄 Exports officiels</div>
+                <div style="font-size:12px;color:#475569;margin-top:6px;">
+                PDF (rapport mensuel) • Excel consolidé • Piste d’audit
+                </div>
+            </div>
+            </div>
+
+            <p style="margin:16px 0 0 0;font-size:14px;">
+            Nous restons à votre disposition pour tout arbitrage ou complément d’information.
+            </p>
+
+            <p style="margin:16px 0 4px 0;font-size:14px;">
+            Cordialement,<br>
+            <b>Département IA &amp; Ingénierie des Données (IAID)</b><br>
+            Institut Supérieur Informatique
+            </p>
+        </div>
+
+        <!-- FOOTER -->
+        <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
+                    font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#475569;">
+            Message automatique — merci de ne pas répondre directement à cet email.
+        </div>
+
+        </div>
+    </body>
+    </html>
+    """.strip()
+
+
 
     def do_send():
         # 1) lock anti double-envoi
@@ -1192,8 +1325,9 @@ with st.sidebar:
                 sender=st.secrets["SMTP_FROM"],
                 recipients=recipients,
                 subject=subject,
-                body=body,
-            )
+                body_text=body_text,
+                body_html=body_html,)
+           
             # 2) marquer envoyé pour le mois
             set_last_reminder_month(month_key)
 
