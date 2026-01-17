@@ -254,6 +254,7 @@ st.set_page_config(
 # .kpi, .iaid-header, div[data-testid="stDataFrame"]{ transition: transform .12s ease, box-shadow .12s ease; }
 # .iaid-header:hover{ transform: translateY(-1px); box-shadow: 0 22px 50px rgba(14,30,37,0.18); }
 # .kpi:hover{ transform: translateY(-2px); box-shadow: 0 18px 40px rgba(14,30,37,0.11); }
+
 # </style>
 # """,
 # unsafe_allow_html=True
@@ -578,6 +579,28 @@ button[kind="primary"] div{
 }
 @media (max-width: 520px){
   .kpi-grid{ grid-template-columns: 1fr; }
+}
+
+/* -----------------------------
+   FOOTER SIGNATURE (FIXE)
+------------------------------*/
+.footer-signature{
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.96);
+  border-top: 1px solid var(--line);
+  padding: 10px 18px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+  z-index: 999;
+  backdrop-filter: blur(6px);
+}
+.footer-signature strong{
+  color: var(--text);
+  font-weight: 900;
 }
 
 
