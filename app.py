@@ -1414,8 +1414,14 @@ with st.sidebar:
     auto_send = st.checkbox("Auto-envoi 1 fois/mois (à l’ouverture)", value=True)
 
     # --- Sécurité admin ---
-    pin = st.text_input("Code admin (PIN)", type="password")
-    is_admin = (pin == st.secrets.get("ADMIN_PIN", ""))
+    pin = st.text_input("Code admin (PIN)", type="password").strip()
+    admin_pin = str(st.secrets.get("ADMIN_PIN", "")).strip()
+
+    is_admin = (pin != "" and admin_pin != "" and pin == admin_pin)
+
+    # rendre dispo partout (onglets)
+    st.session_state["is_admin"] = is_admin
+
 
 
     subject = f"IAID — Rappel mensuel de pilotage des enseignements ({today.strftime('%m/%Y')})"
@@ -2417,13 +2423,15 @@ with tab_alertes:
             # is_admin doit exister (tu l'as dans la sidebar: is_admin = (pin == ADMIN_PIN))
 
             if st.button("📩 Envoyer maintenant aux enseignants", key="send_prof_alerts"):
-                if not is_admin:
+                if not st.session_state.get("is_admin", False):
                     st.error("Accès refusé : PIN incorrect.")
+                    st.stop()
+
                 else:
                     if alerts_send.empty:
                         st.warning("Aucune ligne à envoyer (vérifie le lot et la sélection des enseignants).")
                         st.stop()
-                        
+
                     # Grouper par enseignant et envoyer 1 mail chacun
                     sent = 0
                     errors = 0
