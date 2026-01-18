@@ -2474,7 +2474,7 @@ with tab_alertes:
                             return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(217,48,37,0.12);color:#D93025;border:1px solid rgba(217,48,37,0.25);">🔴 Non démarré</span>'
 
                         lignes_html = ""
-                        for _, r in gprof.sort_values(["Écart"], ascending=[False, True]).iterrows():
+                        for _, r in gprof.sort_values(["Écart"], ascending=True).iterrows():
                             # Sécuriser valeurs
                             classe = str(r.get("Classe", ""))
                             sem = str(r.get("Semestre", ""))
