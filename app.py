@@ -1676,8 +1676,10 @@ filtered_base = df_period[
     & (df_period["VHP"] >= min_vhp)
 ].copy()
 
-if selected_responsables:
+# Appliquer le filtre Responsable seulement si l’utilisateur a réduit la sélection
+if selected_responsables and set(selected_responsables) != set(responsables):
     filtered_base = filtered_base[filtered_base["Responsable"].isin(selected_responsables)]
+
 
 
 # Semestre
@@ -1701,57 +1703,6 @@ if show_only_delay:
 # Dataset final (sans Enseignant/Type)
 # -----------------------------
 filtered = filtered_base.copy()
-# =============================
-# DIAGNOSTIC EXACT (S1 vs filtres)
-# =============================
-with st.expander("🔎 Diagnostic — Pourquoi le KPI ne correspond pas ?", expanded=True):
-
-    # 1) Combien de lignes S1 existent VRAIMENT dans le fichier ?
-    s1_brut = df_period[df_period["Semestre_norm"] == "S1"].copy()
-    st.write("### S1 — dans df_period (avant filtres UI)")
-    st.write({
-        "S1 (lignes)": int(len(s1_brut)),
-        "S1 (matières non vides)": int((~s1_brut["Matière_vide"]).sum()) if "Matière_vide" in s1_brut.columns else "n/a",
-        "S1 (VHP > 0)": int((s1_brut["VHP"] > 0).sum()) if "VHP" in s1_brut.columns else "n/a",
-    })
-
-    # 2) Combien restent après tes filtres (classes/statuts/enseignants/min_vhp/recherche/retards/semestre) ?
-    s1_filtre = filtered[filtered["Semestre_norm"] == "S1"].copy()
-    st.write("### S1 — après filtres UI (filtered)")
-    st.write({
-        "S1 (lignes)": int(len(s1_filtre)),
-        "S1 (matières non vides)": int((~s1_filtre["Matière_vide"]).sum()) if "Matière_vide" in s1_filtre.columns else "n/a",
-    })
-
-    # 3) Montre les lignes S1 qui sont présentes avant filtres mais absentes après filtres
-    # On compare via un identifiant robuste
-    def norm_txt(x):
-        return str(x).strip().lower()
-
-    s1_brut["_key"] = (
-        s1_brut["Classe"].astype(str) + "||" +
-        s1_brut["Semestre_norm"].astype(str) + "||" +
-        s1_brut["Matière"].astype(str).apply(norm_txt) + "||" +
-        s1_brut["VHP"].astype(str)
-    )
-
-    s1_filtre["_key"] = (
-        s1_filtre["Classe"].astype(str) + "||" +
-        s1_filtre["Semestre_norm"].astype(str) + "||" +
-        s1_filtre["Matière"].astype(str).apply(norm_txt) + "||" +
-        s1_filtre["VHP"].astype(str)
-    )
-
-    missing_keys = set(s1_brut["_key"]) - set(s1_filtre["_key"])
-    lost = s1_brut[s1_brut["_key"].isin(missing_keys)].copy()
-
-    st.write(f"### Lignes S1 perdues à cause des filtres : {int(len(lost))}")
-    if len(lost):
-        st.dataframe(
-            lost[["Classe","Matière","Responsable","VHP","Statut_auto","Écart","Observations"]].head(200),
-            use_container_width=True
-        )
-
 
 
 # ✅ Classes réellement disponibles après filtres (important pour l'onglet "Par classe")
