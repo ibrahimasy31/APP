@@ -2450,15 +2450,16 @@ with tab_alertes:
                             )
 
                         body_text_prof = (
-                            f"IAID — Alerte de suivi des enseignements\n"
+                            f"IAID — Notification de suivi des enseignements\n"
                             f"Période : {mois_min} → {mois_max}\n\n"
                             f"Bonjour {prof},\n\n"
-                            f"Vous avez {len(gprof)} matière(s) concernée(s) par l'envoi : {lot}\n\n"
+                            f"Vous avez {len(gprof)} matière(s) concernée(s) par la notification suivante : {lot}.\n\n"
+                            f"Aucune action n’est requise. Message transmis à titre informatif.\n\n"
                             + "\n".join(lignes)
                             + "\n\n"
-                            f"Dashboard : {dashboard_url}\n"
-                            f"Merci de mettre à jour les heures réalisées.\n"
+                            f"Département IA & Ingénierie des Données (IAID)\n"
                         )
+
 
                         subject_prof = f"IAID — Alerte enseignements ({mois_min}→{mois_max}) : {len(gprof)} module(s)"
 
@@ -2501,90 +2502,86 @@ with tab_alertes:
                             """
 
                         body_html_prof = f"""
-                        <!doctype html>
-                        <html>
-                        <body style="margin:0;padding:0;background:#0B3D91;">
-                          <div style="background:linear-gradient(180deg,#0B3D91 0%,#134FA8 100%);padding:34px 12px;">
+                            <!doctype html>
+                            <html>
+                            <body style="margin:0;padding:0;background:#0B3D91;">
+                            <div style="background:linear-gradient(180deg,#0B3D91 0%,#134FA8 100%);padding:34px 12px;">
 
-                            <div style="max-width:860px;margin:0 auto;background:#FFFFFF;border-radius:20px;
-                                        box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden;
-                                        font-family:Arial,Helvetica,sans-serif;color:#0F172A;">
+                                <div style="max-width:860px;margin:0 auto;background:#FFFFFF;border-radius:20px;
+                                            box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden;
+                                            font-family:Arial,Helvetica,sans-serif;color:#0F172A;">
 
-                              <!-- EN-TÊTE -->
-                              <div style="padding:22px 26px;background:linear-gradient(90deg,#0B3D91,#1F6FEB);color:#FFFFFF;">
-                                <div style="font-size:18px;font-weight:900;">
-                                  IAID — Notification Enseignant
-                                </div>
-                                <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
-                                  Lot : {lot} • Période : {mois_min} → {mois_max}
-                                </div>
-                                <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.9;">
-                                  Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
-                                </div>
-                              </div>
-
-                              <!-- CONTENU -->
-                              <div style="padding:26px;line-height:1.55;">
-                                <p style="margin-top:0;">
-                                  Bonjour <b>{prof}</b>,
-                                </p>
-
-                                <p>
-                                  Vous avez <b>{len(gprof)} matière(s)</b> concernée(s) par l'envoi :
-                                  <b>{lot}</b>. Merci de vérifier / mettre à jour les heures réalisées.
-                                </p>
-
-                                <!-- TABLE -->
-                                <div style="margin:18px 0;border:1px solid #E3E8F0;border-radius:14px;overflow:hidden;">
-                                  <table style="border-collapse:collapse;width:100%;font-size:13px;">
-                                    <thead>
-                                      <tr style="background:#F6F8FC;">
-                                        <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Classe</th>
-                                        <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Sem</th>
-                                        <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Matière</th>
-                                        <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHP</th>
-                                        <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHR</th>
-                                        <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">Écart</th>
-                                        <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Statut</th>
-                                        <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Raison</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {lignes_html}
-                                    </tbody>
-                                  </table>
+                                <!-- HEADER -->
+                                <div style="padding:22px 26px;background:linear-gradient(90deg,#0B3D91,#1F6FEB);color:#FFFFFF;">
+                                    <div style="font-size:18px;font-weight:900;">
+                                    IAID — Notification Enseignant
+                                    </div>
+                                    <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
+                                    {lot} • Période : {mois_min} → {mois_max}
+                                    </div>
+                                    <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.9;">
+                                    Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
+                                    </div>
                                 </div>
 
-                                <!-- BOUTON -->
-                                <div style="text-align:center;margin:20px 0;">
-                                  <a href="{dashboard_url}" style="
-                                      display:inline-block;background:#0B3D91;color:#FFFFFF;text-decoration:none;
-                                      padding:14px 22px;border-radius:14px;font-weight:900;font-size:14px;
-                                      box-shadow:0 10px 24px rgba(14,30,37,0.25);">
-                                      Ouvrir le Dashboard IAID →
-                                  </a>
+                                <!-- CONTENT -->
+                                <div style="padding:26px;line-height:1.55;">
+
+                                    <p style="margin-top:0;">
+                                    Bonjour <b>{prof}</b>,
+                                    </p>
+
+                                    <p>
+                                    Vous avez <b>{len(gprof)} matière(s)</b> concernée(s) par la notification suivante :
+                                    <b>{lot}</b>.
+                                    </p>
+
+                                    <div style="margin:14px 0;background:#F6F8FC;border:1px solid #E3E8F0;border-radius:14px;padding:14px 16px;">
+                                    <div style="font-weight:900;color:#0B3D91;margin-bottom:6px;">📌 Information</div>
+                                    <div style="font-size:13px;">
+                                        Aucune action n’est requise. Message transmis à titre informatif.
+                                    </div>
+                                    </div>
+
+                                    <!-- TABLE -->
+                                    <div style="margin:18px 0;border:1px solid #E3E8F0;border-radius:14px;overflow:hidden;">
+                                    <table style="border-collapse:collapse;width:100%;font-size:13px;">
+                                        <thead>
+                                        <tr style="background:#F6F8FC;">
+                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Classe</th>
+                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Sem</th>
+                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Matière</th>
+                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHP</th>
+                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHR</th>
+                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">Écart</th>
+                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Statut</th>
+                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Raison</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {lignes_html}
+                                        </tbody>
+                                    </table>
+                                    </div>
+
+                                    <p style="font-size:13px;color:#475569;">
+                                    Ce message est généré automatiquement dans le cadre du pilotage académique.
+                                    </p>
+
                                 </div>
 
-                                <!-- BLOC RAPPEL -->
-                                <div style="margin-top:18px;background:#F6F8FC;border:1px solid #E3E8F0;border-radius:14px;padding:14px 16px;">
-                                  <div style="font-weight:900;color:#0B3D91;margin-bottom:6px;">📌 Rappel</div>
-                                  <div style="font-size:13px;">
-                                    Merci de renseigner les heures par mois et les observations si nécessaire.
-                                  </div>
+                                <!-- FOOTER -->
+                                <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
+                                            font-size:12px;color:#475569;text-align:center;">
+                                    Département IA &amp; Ingénierie des Données (IAID)
                                 </div>
-                              </div>
 
-                              <!-- FOOTER -->
-                              <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
-                                          font-size:12px;color:#475569;text-align:center;">
-                                Message automatique — Département IA &amp; Ingénierie des Données (IAID)
-                              </div>
-
+                                </div>
                             </div>
-                          </div>
-                        </body>
-                        </html>
-                        """
+                            </body>
+                            </html>
+                            """
+
 
 
                         # HTML léger (facultatif). Ici on envoie juste texte (plus fiable).
