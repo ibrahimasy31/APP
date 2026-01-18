@@ -1851,17 +1851,7 @@ with tab_overview:
 
     st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
 
-    st.dataframe(
-    top_retards[["Classe","Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]],
-    use_container_width=True,
-    column_config={
-        "Taux": st.column_config.ProgressColumn("Taux", min_value=0.0, max_value=1.0, format="%.0f%%"),
-        "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
-        "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
-        "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
-        "Statut_auto": st.column_config.TextColumn("Statut"),
-    }
-)
+
 
 
 
