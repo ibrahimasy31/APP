@@ -1591,6 +1591,12 @@ df_period["Écart"] = df_period["VHR"] - df_period["VHP"]
 df_period["Taux"] = np.where(df_period["VHP"] == 0, 0, df_period["VHR"] / df_period["VHP"])
 df_period["Statut_auto"] = np.where(df_period["VHR"] <= 0, "Non démarré", np.where(df_period["VHR"] < df_period["VHP"], "En cours", "Terminé"))
 
+# =========================
+# FIX RESPONSABLE (IMPORTANT)
+# =========================
+df_period["Responsable"] = df_period["Responsable"].astype(str).replace({"nan":"", "None":""}).fillna("").str.strip()
+df_period["Responsable"] = df_period["Responsable"].replace({"": "⚠️ Non affecté"})
+
 # -----------------------------
 # Filtres avancés
 # -----------------------------
@@ -1647,14 +1653,15 @@ status_opts = ["Non démarré", "En cours", "Terminé"]
 selected_status = st.sidebar.multiselect("Statuts", status_opts, default=status_opts)
 
 # -----------------------------
-# Filtre Responsable (enseignant)
+# Filtre Responsable (enseignant) — robuste
 # -----------------------------
-responsables = sorted([x for x in df_period["Responsable"].dropna().unique().tolist() if str(x).strip()])
+responsables = sorted(df_period["Responsable"].unique().tolist())
 selected_responsables = st.sidebar.multiselect(
     "Responsables (enseignants)",
     responsables,
     default=responsables
 ) if responsables else []
+
 
 
 search_matiere = st.sidebar.text_input("Recherche Matière (regex)", value="")
