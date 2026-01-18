@@ -2286,7 +2286,12 @@ with tab_alertes:
         # 1) On garde seulement les lignes en alerte
         alerts_full = tmp.loc[
         tmp["En_alerte"] & (tmp["Email"].astype(str).str.strip() != ""),
-        ["Responsable", "Email", "Classe", "Matière", "Semestre", "Type", "VHP", "VHR", "Écart", "Taux", "Statut_auto", "Raison_alerte", "Observations"]
+        [
+            "Responsable", "Email", "Classe", "Matière", "Semestre", "Type",
+            "VHP", "VHR", "Écart", "Taux", "Statut_auto",
+            "Alerte_non_demarre", "Alerte_retard_critique", "Alerte_fin_depassee",
+            "Raison_alerte", "Observations"
+        ]
     ].copy()
 
 
@@ -2317,6 +2322,94 @@ with tab_alertes:
             st.caption("✅ Un seul email sera envoyé par enseignant (Email).")
             st.divider()
 
+            # ==============================
+            # CHOIX DU LOT A ENVOYER
+            # ==============================
+            st.write("### 🎯 Choisir le lot à envoyer")
+
+            lot = st.selectbox(
+                "Quel type d'envoi ?",
+                [
+                    "🚨 Toutes les alertes (Non démarré + Retard critique + Fin dépassée)",
+                    "🛑 Seulement Non démarré",
+                    "🔻 Seulement Retard critique",
+                    "⛔ Seulement Fin dépassée",
+                    "📌 Information : En cours (pas alerte)",
+                    "✅ Information : Terminé (pas alerte)",
+                ],
+                index=0,
+                key="lot_prof"
+            )
+
+            # Filtre selon lot choisi
+            if lot.startswith("🚨"):
+                alerts_send = alerts_full.copy()
+
+            elif lot.startswith("🛑"):
+                alerts_send = alerts_full[alerts_full["Alerte_non_demarre"]].copy()
+
+            elif lot.startswith("🔻"):
+                alerts_send = alerts_full[alerts_full["Alerte_retard_critique"]].copy()
+
+            elif lot.startswith("⛔"):
+                alerts_send = alerts_full[alerts_full["Alerte_fin_depassee"]].copy()
+
+            elif lot.startswith("📌"):
+                alerts_send = tmp[
+                    (tmp["Statut_auto"] == "En cours")
+                    & (tmp["Email"].astype(str).str.strip() != "")
+                ][
+                    ["Responsable","Email","Classe","Matière","Semestre","Type","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
+                ].copy()
+
+            else:  # ✅ Terminé
+                alerts_send = tmp[
+                    (tmp["Statut_auto"] == "Terminé")
+                    & (tmp["Email"].astype(str).str.strip() != "")
+                ][
+                    ["Responsable","Email","Classe","Matière","Semestre","Type","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
+                ].copy()
+
+            st.write("Aperçu du lot sélectionné :")
+            st.dataframe(
+                alerts_send[["Responsable","Email","Classe","Matière","Écart","Statut_auto","Raison_alerte"]].head(50),
+                use_container_width=True
+            )
+
+            # ==============================
+            # CHOIX DES ENSEIGNANTS (AVANT ENVOI)
+            # ==============================
+            st.write("### 👥 Choisir les enseignants (avant envoi)")
+
+            # Liste des enseignants disponibles dans le lot
+            profs_dispo = sorted(
+                alerts_send["Responsable"]
+                .astype(str)
+                .replace({"nan": "", "None": ""})
+                .fillna("")
+                .str.strip()
+                .unique()
+                .tolist()
+            )
+            profs_dispo = [p for p in profs_dispo if p != ""]
+
+            # Sélection (par défaut = tous)
+            profs_sel = st.multiselect(
+                "Enseignants à notifier",
+                options=profs_dispo,
+                default=profs_dispo,
+                key="profs_sel"
+            )
+
+            # Appliquer filtre enseignants au lot
+            alerts_send = alerts_send[alerts_send["Responsable"].isin(profs_sel)].copy()
+
+            # Petit résumé
+            st.caption(f"📌 Enseignants sélectionnés : {len(profs_sel)} | Lignes à envoyer : {len(alerts_send)}")
+
+
+
+
             # 4) Bouton d'envoi (admin seulement)
             st.write("### 🚀 Envoyer les alertes aux enseignants")
 
@@ -2327,12 +2420,17 @@ with tab_alertes:
                 if not is_admin:
                     st.error("Accès refusé : PIN incorrect.")
                 else:
+                    if alerts_send.empty:
+                        st.warning("Aucune ligne à envoyer (vérifie le lot et la sélection des enseignants).")
+                        st.stop()
+                        
                     # Grouper par enseignant et envoyer 1 mail chacun
                     sent = 0
                     errors = 0
 
                     # On envoie seulement si Email non vide
-                    grp = alerts_full[alerts_full["Email"] != ""].groupby(["Responsable", "Email"])
+                    grp = alerts_send[alerts_send["Email"] != ""].groupby(["Responsable", "Email"])
+
 
                     for (prof, mail), gprof in grp:
                         # Construire contenu texte simple
@@ -2347,7 +2445,7 @@ with tab_alertes:
                             f"IAID — Alerte de suivi des enseignements\n"
                             f"Période : {mois_min} → {mois_max}\n\n"
                             f"Bonjour {prof},\n\n"
-                            f"Vous avez {len(gprof)} matière(s) en alerte.\n\n"
+                            f"Vous avez {len(gprof)} matière(s) concernée(s) par l'envoi : {lot}\n\n"
                             + "\n".join(lignes)
                             + "\n\n"
                             f"Dashboard : {dashboard_url}\n"
