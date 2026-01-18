@@ -939,6 +939,23 @@ def style_table(df: pd.DataFrame) -> pd.DataFrame:
 
     return out
 
+def statut_badge_text(s: str) -> str:
+    s = str(s).strip()
+    if s == "Terminé":
+        return "✅ Terminé"
+    if s == "En cours":
+        return "🟠 En cours"
+    return "🔴 Non démarré"
+
+def niveau_from_statut(s: str) -> str:
+    s = str(s).strip()
+    if s == "Terminé":
+        return "OK"
+    if s == "En cours":
+        return "ATTENTION"
+    return "CRITIQUE"
+
+
 def render_badged_table(df: pd.DataFrame, columns: List[str], title: str = "") -> None:
     if title:
         st.write(title)
@@ -1946,32 +1963,54 @@ with tab_classes:
     st.dataframe(comp, use_container_width=True)
 
     st.write(f"### Retards (Top 15) — {cls1}")
-    tA = A.sort_values("Écart").head(15)[["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]].copy()
+    tA = A.sort_values("Écart").head(15)[
+    ["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]
+    ].copy()
+
     tA["Taux (%)"] = (tA["Taux"] * 100).round(1)
+    tA["Statut_badge"] = tA["Statut_auto"].apply(statut_badge_text)
+    tA["Niveau"] = tA["Statut_auto"].apply(niveau_from_statut)
+
     st.dataframe(
-        tA[["Matière","VHP","VHR","Écart","Taux (%)","Statut_auto","Observations"]],
+        tA[["Matière","VHP","VHR","Écart","Taux (%)","Statut_badge","Niveau","Observations"]],
         use_container_width=True,
         column_config={
             "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
             "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
             "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
             "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+            "Niveau": st.column_config.SelectboxColumn(
+                "Niveau",
+                options=["OK", "ATTENTION", "CRITIQUE"],
+                help="Indicateur synthétique basé sur le statut",
+            ),
+            "Statut_badge": st.column_config.TextColumn("Statut"),
         }
     )
 
+
     st.write(f"### Retards (Top 15) — {cls2}")
-    tB = B.sort_values("Écart").head(15)[["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]].copy()
+    tB = B.sort_values("Écart").head(15)[
+    ["Matière","VHP","VHR","Écart","Taux","Statut_auto","Observations"]
+    ].copy()
+
     tB["Taux (%)"] = (tB["Taux"] * 100).round(1)
+    tB["Statut_badge"] = tB["Statut_auto"].apply(statut_badge_text)
+    tB["Niveau"] = tB["Statut_auto"].apply(niveau_from_statut)
+
     st.dataframe(
-        tB[["Matière","VHP","VHR","Écart","Taux (%)","Statut_auto","Observations"]],
+        tB[["Matière","VHP","VHR","Écart","Taux (%)","Statut_badge","Niveau","Observations"]],
         use_container_width=True,
         column_config={
             "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
             "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
             "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
             "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+            "Niveau": st.column_config.SelectboxColumn("Niveau", options=["OK","ATTENTION","CRITIQUE"]),
+            "Statut_badge": st.column_config.TextColumn("Statut"),
         }
     )
+
 
 
 # ====== PAR MATIÈRE ======
