@@ -1953,8 +1953,7 @@ with tab_overview:
     nb_nd   = int((filtered["Statut_auto"] == "Non démarré").sum())
     retard_total = float(filtered.loc[filtered["Écart"] < 0, "Écart"].sum()) if total else 0.0
 
-    # ----- KPI en cartes HTML (NOTE: f""" ... """ obligatoire) -----
-    # --- Choix couleur retard ---
+    # ----- KPI en cartes HTML -----
     retard_class = "kpi-good"
     if retard_total < 0:
         retard_class = "kpi-bad"
@@ -1963,32 +1962,32 @@ with tab_overview:
 
     st.markdown(
         f"""
-    <div class="kpi-grid">
-    <div class="kpi kpi-good">
-        <div class="kpi-title">Matières</div>
-        <div class="kpi-value">{total}</div>
-    </div>
+        <div class="kpi-grid">
+          <div class="kpi kpi-good">
+            <div class="kpi-title">Matières</div>
+            <div class="kpi-value">{total}</div>
+          </div>
 
-    <div class="kpi kpi-warn">
-        <div class="kpi-title">Taux moyen</div>
-        <div class="kpi-value">{taux_moy:.1f}%</div>
-    </div>
+          <div class="kpi kpi-warn">
+            <div class="kpi-title">Taux moyen</div>
+            <div class="kpi-value">{taux_moy:.1f}%</div>
+          </div>
 
-    <div class="kpi kpi-good">
-        <div class="kpi-title">Terminées</div>
-        <div class="kpi-value">{nb_term}</div>
-    </div>
+          <div class="kpi kpi-good">
+            <div class="kpi-title">Terminées</div>
+            <div class="kpi-value">{nb_term}</div>
+          </div>
 
-    <div class="kpi kpi-warn">
-        <div class="kpi-title">En cours</div>
-        <div class="kpi-value">{nb_enc}</div>
-    </div>
+          <div class="kpi kpi-warn">
+            <div class="kpi-title">En cours</div>
+            <div class="kpi-value">{nb_enc}</div>
+          </div>
 
-    <div class="kpi {retard_class}">
-        <div class="kpi-title">Retard cumulé (h)</div>
-        <div class="kpi-value">{retard_total:.0f}</div>
-    </div>
-    </div>
+          <div class="kpi {retard_class}">
+            <div class="kpi-title">Retard cumulé (h)</div>
+            <div class="kpi-value">{retard_total:.0f}</div>
+          </div>
+        </div>
         """,
         unsafe_allow_html=True
     )
@@ -1998,59 +1997,60 @@ with tab_overview:
     st.write("### Avancement moyen par classe")
     g = filtered.groupby("Classe")["Taux"].mean().sort_values(ascending=False).reset_index()
     g["Taux (%)"] = (g["Taux"] * 100).round(1)
+
     st.dataframe(
-    g[["Classe","Taux (%)"]],
-    use_container_width=True,
-    column_config={
-        "Taux (%)": st.column_config.ProgressColumn(
-            "Taux (%)", min_value=0.0, max_value=100.0, format="%.1f"
-        )
-    }
+        g[["Classe", "Taux (%)"]],
+        use_container_width=True,
+        column_config={
+            "Taux (%)": st.column_config.ProgressColumn(
+                "Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"
+            )
+        }
     )
 
     fig = px.bar(g, x="Classe", y="Taux (%)", title="Avancement moyen (%) par classe")
-    fig.update_layout(height=420, margin=dict(l=10,r=10,t=60,b=10))
+    fig.update_layout(height=420, margin=dict(l=10, r=10, t=60, b=10))
     st.plotly_chart(fig, use_container_width=True)
-
 
     st.write("### Répartition des statuts")
     stat = filtered["Statut_auto"].value_counts().reset_index()
     stat.columns = ["Statut", "Nombre"]
     fig = px.pie(stat, names="Statut", values="Nombre", title="Répartition des statuts")
-    fig.update_layout(height=420, margin=dict(l=10,r=10,t=60,b=10))
+    fig.update_layout(height=420, margin=dict(l=10, r=10, t=60, b=10))
     st.plotly_chart(fig, use_container_width=True)
 
+    # =========================================================
+    # ✅ TOP RETARDS (st.dataframe + emojis) — VERSION PRO
+    # =========================================================
     st.write("### Top retards (Écart le plus négatif)")
+
     top_retards = filtered.sort_values("Écart").head(20)[
         ["Classe", "Matière", "VHP", "VHR", "Écart", "Taux", "Statut_auto", "Observations"]
     ].copy()
 
-    # garder Taux numérique pour la coloration
-    top_retards_badged = add_badges(top_retards)
+    # ✅ Ajout colonnes lisibles
+    top_retards["Taux (%)"] = (top_retards["Taux"] * 100).round(1)
+    top_retards["Statut"] = top_retards["Statut_auto"].apply(statut_badge_text)
 
-    # # Affichage "pro" avec badge (HTML)
-    # html_table = top_retards_badged[
-    #     ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]
-    # ].to_html(escape=False, index=False, classes="iaid-table")
-
-    # st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
-
-
-    # + une version dataframe colorée (optionnel, très utile)
-
-    top_retards_badged = add_badges(top_retards)
-
-    html_table = top_retards_badged[
-        ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_badge","Observations"]
-    ].to_html(escape=False, index=False, classes="iaid-table")
-
-    st.markdown(f'<div class="table-wrap">{html_table}</div>', unsafe_allow_html=True)
+    st.dataframe(
+        top_retards[["Classe", "Matière", "VHP", "VHR", "Écart", "Taux (%)", "Statut", "Observations"]],
+        use_container_width=True,
+        height=420,
+        column_config={
+            "Taux (%)": st.column_config.ProgressColumn(
+                "Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"
+            ),
+            "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
+            "VHP": st.column_config.NumberColumn("VHP", format="%.0f"),
+            "VHR": st.column_config.NumberColumn("VHR", format="%.0f"),
+            "Statut": st.column_config.TextColumn("Statut"),
+        }
+    )
 
 
 
 
 
-# ====== PAR CLASSE ======
 # ====== PAR CLASSE ======
 with tab_classes:
     st.subheader("Drilldown par classe + comparaison")
@@ -2554,12 +2554,14 @@ with tab_alertes:
             )
 
             alerts_send_sel = alerts_send[alerts_send["Responsable"].isin(profs_sel)].copy()
+            alerts_send_sel["Statut"] = alerts_send_sel["Statut_auto"].apply(statut_badge_text)
+
 
             st.caption(f"📌 Enseignants sélectionnés : {len(profs_sel)} | Lignes à envoyer : {len(alerts_send_sel)}")
 
             st.write("Aperçu (lot sélectionné) :")
             st.dataframe(
-                alerts_send_sel[["Responsable","Email","Classe","Semestre","Type","Matière","Écart","Statut_auto","Raison_alerte","Observations"]].head(80),
+                alerts_send_sel[["Responsable","Email","Classe","Semestre","Type","Matière","Écart","Statut","Raison_alerte","Observations"]].head(80),
                 use_container_width=True,
                 height=320
             )
