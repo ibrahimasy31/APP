@@ -2218,15 +2218,19 @@ with tab_mensuel:
 with tab_alertes:
     st.subheader("Alertes intelligentes (paramétrables)")
 
+    # --- Base calcul alertes ---
     tmp = filtered.copy()
 
-    # --- Dates (si format Excel texte) : on tente parse ---
+    # Sécurités colonnes (au cas où certaines feuilles n'ont pas ces champs)
+    for col in ["Début prévu", "Fin prévue", "Type", "Email"]:
+        if col not in tmp.columns:
+            tmp[col] = ""
+
     tmp["Début_dt"] = pd.to_datetime(tmp["Début prévu"], errors="coerce", dayfirst=True)
     tmp["Fin_dt"]   = pd.to_datetime(tmp["Fin prévue"], errors="coerce", dayfirst=True)
-
     today_dt = pd.Timestamp(dt.date.today())
 
-    # --- Règles d'alerte ---
+    # --- Règles ---
     tmp["Alerte_retard_critique"] = (tmp["Écart"] <= thresholds["ecart_critique"])
     tmp["Alerte_non_demarre"] = (tmp["Statut_auto"] == "Non démarré") & (
         tmp["Début_dt"].isna() | (tmp["Début_dt"] <= today_dt)
@@ -2235,49 +2239,67 @@ with tab_alertes:
 
     def raison_alerte(row):
         reasons = []
-        if row["Alerte_fin_depassee"]:
+        if bool(row.get("Alerte_fin_depassee", False)):
             reasons.append("⛔ Fin dépassée")
-        if row["Alerte_retard_critique"]:
+        if bool(row.get("Alerte_retard_critique", False)):
             reasons.append("🔻 Retard critique")
-        if row["Alerte_non_demarre"]:
+        if bool(row.get("Alerte_non_demarre", False)):
             reasons.append("🛑 Non démarré")
         return " • ".join(reasons)
 
     tmp["Raison_alerte"] = tmp.apply(raison_alerte, axis=1)
     tmp["En_alerte"] = tmp["Raison_alerte"].ne("")
 
-    # Tri : fin dépassée puis retard puis non démarré, puis écart
+    # Priorité (fin dépassée > retard critique > non démarré) puis écart
     tmp["_prio"] = (
-        tmp["Alerte_fin_depassee"].astype(int)*3 +
-        tmp["Alerte_retard_critique"].astype(int)*2 +
-        tmp["Alerte_non_demarre"].astype(int)*1
+        tmp["Alerte_fin_depassee"].astype(int) * 3
+        + tmp["Alerte_retard_critique"].astype(int) * 2
+        + tmp["Alerte_non_demarre"].astype(int) * 1
     )
     tmp = tmp.sort_values(["_prio", "Écart"], ascending=[False, True])
 
+    # --- KPIs alertes ---
+    nb_alertes = int(tmp["En_alerte"].sum())
+    nb_fin = int(tmp["Alerte_fin_depassee"].sum())
+    nb_ret = int(tmp["Alerte_retard_critique"].sum())
+    nb_nd  = int(tmp["Alerte_non_demarre"].sum())
 
-    c1, c2 = st.columns(2)
-    with c1:
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 4px 0;">
+          <div class="kpi kpi-bad"><div class="kpi-title">Total alertes</div><div class="kpi-value">{nb_alertes}</div></div>
+          <div class="kpi kpi-bad"><div class="kpi-title">Fin dépassée</div><div class="kpi-value">{nb_fin}</div></div>
+          <div class="kpi kpi-bad"><div class="kpi-title">Retards critiques</div><div class="kpi-value">{nb_ret}</div></div>
+          <div class="kpi kpi-warn"><div class="kpi-title">Non démarrés</div><div class="kpi-value">{nb_nd}</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.caption("💡 Onglet propre : lecture (Vue priorisée) séparée de l’envoi (Par enseignant).")
+    st.divider()
+
+    # --- Sous-onglets internes ---
+    t1, t2, t3 = st.tabs(["📌 Vue priorisée", "📧 Par enseignant", "📊 Graphiques"])
+
+    # =========================================================
+    # 1) VUE PRIORISÉE
+    # =========================================================
+    with t1:
         st.write("### Liste des alertes (priorisées)")
 
         alerts = tmp.loc[
-        tmp["En_alerte"],
-        ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
-    ].copy()
+            tmp["En_alerte"],
+            ["Classe","Matière","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
+        ].copy()
 
-
-        # 1) Taux en %
         alerts["Taux (%)"] = (alerts["Taux"] * 100).round(1)
-
-        # 2) Statut avec emoji (comme "Par classe")
         alerts["Statut"] = alerts["Statut_auto"].apply(statut_badge_text)
 
-    
-
-
-        # 3) Affichage (on cache Statut_auto)
         st.dataframe(
-            alerts[["Classe","Matière","VHP","VHR","Écart","Taux (%)","Statut","Raison_alerte","Observations"]].head(50),
+            alerts[["Classe","Matière","VHP","VHR","Écart","Taux (%)","Statut","Raison_alerte","Observations"]],
             use_container_width=True,
+            height=520,
             column_config={
                 "Taux (%)": st.column_config.ProgressColumn("Taux (%)", min_value=0.0, max_value=100.0, format="%.1f%%"),
                 "Écart": st.column_config.NumberColumn("Écart (h)", format="%.0f"),
@@ -2286,337 +2308,171 @@ with tab_alertes:
             }
         )
 
-        st.divider()
-        st.write("### 📧 Alertes par enseignant (préparation envoi)")
+        st.caption("✅ Ici : lecture uniquement (pas de boutons d’envoi).")
 
-        # 1) On garde seulement les lignes en alerte
+    # =========================================================
+    # 2) PAR ENSEIGNANT (LOT + SELECTION + ENVOI)
+    # =========================================================
+    with t2:
+        st.write("### Préparation : alertes par enseignant (1 email / enseignant)")
+
+        # Nettoyage Email
+        tmp["Email"] = (
+            tmp["Email"].astype(str)
+            .replace({"nan": "", "None": ""})
+            .fillna("")
+            .str.strip()
+            .str.lower()
+        )
+
         alerts_full = tmp.loc[
-        tmp["En_alerte"] & (tmp["Email"].astype(str).str.strip() != ""),
-        [
-            "Responsable", "Email", "Classe", "Matière", "Semestre", "Type",
-            "VHP", "VHR", "Écart", "Taux", "Statut_auto",
-            "Alerte_non_demarre", "Alerte_retard_critique", "Alerte_fin_depassee",
-            "Raison_alerte", "Observations"
-        ]
-    ].copy()
+            tmp["En_alerte"] & (tmp["Email"] != ""),
+            [
+                "Responsable", "Email", "Classe", "Matière", "Semestre", "Type",
+                "VHP", "VHR", "Écart", "Taux", "Statut_auto",
+                "Alerte_non_demarre", "Alerte_retard_critique", "Alerte_fin_depassee",
+                "Raison_alerte", "Observations"
+            ]
+        ].copy()
 
+        synth_prof = alerts_full.groupby(["Responsable", "Email"]).agg(
+            Nb_alertes=("Matière", "count"),
+            Nb_non_demarre=("Statut_auto", lambda s: int((s == "Non démarré").sum())),
+            Nb_retard_critique=("Écart", lambda s: int((s <= thresholds["ecart_critique"]).sum())),
+            Nb_fin_depassee=("Alerte_fin_depassee", "sum"),
+        ).reset_index().sort_values("Nb_alertes", ascending=False)
 
-        # 2) Nettoyage Email
-        if "Email" not in alerts_full.columns:
-            st.warning("Colonne 'Email' absente. Ajoute-la dans le fichier Excel.")
+        if synth_prof.empty:
+            st.info("Aucune alerte exploitable avec email enseignant renseigné.")
+            st.stop()
+
+        st.dataframe(synth_prof, use_container_width=True, height=260)
+        st.caption("✅ Un seul email envoyé par enseignant (Email).")
+
+        st.divider()
+
+        # Lot
+        lot = st.selectbox(
+            "Lot à envoyer",
+            [
+                "🚨 Toutes les alertes (Non démarré + Retard critique + Fin dépassée)",
+                "🛑 Seulement Non démarré",
+                "🔻 Seulement Retard critique",
+                "⛔ Seulement Fin dépassée",
+            ],
+            index=0,
+            key="lot_prof"
+        )
+
+        if lot.startswith("🚨"):
+            alerts_send = alerts_full.copy()
+        elif lot.startswith("🛑"):
+            alerts_send = alerts_full[alerts_full["Alerte_non_demarre"]].copy()
+        elif lot.startswith("🔻"):
+            alerts_send = alerts_full[alerts_full["Alerte_retard_critique"]].copy()
         else:
-            alerts_full["Email"] = (
-                alerts_full["Email"].astype(str)
-                .replace({"nan": "", "None": ""})
-                .fillna("")
-                .str.strip()
-                .str.lower()
-            )
+            alerts_send = alerts_full[alerts_full["Alerte_fin_depassee"]].copy()
 
-            # 3) Synthèse par enseignant
-            synth_prof = alerts_full[alerts_full["Email"] != ""].groupby(["Responsable", "Email"]).agg(
-                Nb_alertes=("Matière", "count"),
-                Nb_non_demarre=("Statut_auto", lambda s: int((s == "Non démarré").sum())),
-                Nb_retard_critique=("Écart", lambda s: int((s <= thresholds["ecart_critique"]).sum())),
-            ).reset_index().sort_values("Nb_alertes", ascending=False)
+        # Sélection enseignants
+        profs_dispo = sorted(
+            alerts_send["Responsable"].astype(str)
+            .replace({"nan": "", "None": ""})
+            .fillna("")
+            .str.strip()
+            .unique()
+            .tolist()
+        )
+        profs_dispo = [p for p in profs_dispo if p]
 
-            if synth_prof.empty:
-                st.info("Aucune alerte avec un email enseignant renseigné.")
-            else:
-                st.dataframe(synth_prof, use_container_width=True)
+        profs_sel = st.multiselect(
+            "Enseignants à notifier",
+            options=profs_dispo,
+            default=profs_dispo,
+            key="profs_sel"
+        )
 
-            st.caption("✅ Un seul email sera envoyé par enseignant (Email).")
-            st.divider()
+        alerts_send = alerts_send[alerts_send["Responsable"].isin(profs_sel)].copy()
 
-            # ==============================
-            # CHOIX DU LOT A ENVOYER
-            # ==============================
-            st.write("### 🎯 Choisir le lot à envoyer")
+        st.caption(f"📌 Enseignants sélectionnés : {len(profs_sel)} | Lignes à envoyer : {len(alerts_send)}")
 
-            lot = st.selectbox(
-                "Quel type d'envoi ?",
-                [
-                    "🚨 Toutes les alertes (Non démarré + Retard critique + Fin dépassée)",
-                    "🛑 Seulement Non démarré",
-                    "🔻 Seulement Retard critique",
-                    "⛔ Seulement Fin dépassée",
-                    "📌 Information : En cours (pas alerte)",
-                    "✅ Information : Terminé (pas alerte)",
-                ],
-                index=0,
-                key="lot_prof"
-            )
+        preview = alerts_send[["Responsable","Email","Classe","Matière","Écart","Statut_auto","Raison_alerte"]].copy()
+        st.dataframe(preview, use_container_width=True, height=320)
 
-            # Filtre selon lot choisi
-            if lot.startswith("🚨"):
-                alerts_send = alerts_full.copy()
+        st.divider()
 
-            elif lot.startswith("🛑"):
-                alerts_send = alerts_full[alerts_full["Alerte_non_demarre"]].copy()
+        st.write("### 🚀 Envoyer (admin)")
 
-            elif lot.startswith("🔻"):
-                alerts_send = alerts_full[alerts_full["Alerte_retard_critique"]].copy()
+        if st.button("📩 Envoyer maintenant aux enseignants", key="send_prof_alerts"):
+            if not st.session_state.get("is_admin", False):
+                st.error("Accès refusé : PIN incorrect.")
+                st.stop()
 
-            elif lot.startswith("⛔"):
-                alerts_send = alerts_full[alerts_full["Alerte_fin_depassee"]].copy()
+            if alerts_send.empty:
+                st.warning("Aucune ligne à envoyer (vérifie le lot et la sélection).")
+                st.stop()
 
-            elif lot.startswith("📌"):
-                alerts_send = tmp[
-                    (tmp["Statut_auto"] == "En cours")
-                    & (tmp["Email"].astype(str).str.strip() != "")
-                ][
-                    ["Responsable","Email","Classe","Matière","Semestre","Type","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
-                ].copy()
+            sent, errors = 0, 0
+            grp = alerts_send.groupby(["Responsable", "Email"])
 
-            else:  # ✅ Terminé
-                alerts_send = tmp[
-                    (tmp["Statut_auto"] == "Terminé")
-                    & (tmp["Email"].astype(str).str.strip() != "")
-                ][
-                    ["Responsable","Email","Classe","Matière","Semestre","Type","VHP","VHR","Écart","Taux","Statut_auto","Raison_alerte","Observations"]
-                ].copy()
+            for (prof, mail), gprof in grp:
+                lignes = []
+                for _, r in gprof.sort_values(["Statut_auto", "Écart"]).iterrows():
+                    lignes.append(
+                        f"- {r.get('Classe','')} | {r.get('Semestre','')} | {r.get('Type','')} | {r.get('Matière','')} | "
+                        f"VHP={int(float(r.get('VHP',0) or 0))} VHR={int(float(r.get('VHR',0) or 0))} "
+                        f"Écart={int(float(r.get('Écart',0) or 0))} | {r.get('Statut_auto','')} | {r.get('Raison_alerte','')}"
+                    )
 
-            st.write("Aperçu du lot sélectionné :")
-            st.dataframe(
-                alerts_send[["Responsable","Email","Classe","Matière","Écart","Statut_auto","Raison_alerte"]].head(50),
-                use_container_width=True
-            )
+                body_text_prof = (
+                    f"IAID — Notification de suivi des enseignements\n"
+                    f"Période : {mois_min} → {mois_max}\n\n"
+                    f"Bonjour {prof},\n\n"
+                    f"Vous avez {len(gprof)} matière(s) concernée(s) par : {lot}.\n\n"
+                    f"Aucune action n’est requise. Message transmis à titre informatif.\n\n"
+                    + "\n".join(lignes)
+                    + "\n\nDépartement IA & Ingénierie des Données (IAID)\n"
+                )
 
-            # ==============================
-            # CHOIX DES ENSEIGNANTS (AVANT ENVOI)
-            # ==============================
-            st.write("### 👥 Choisir les enseignants (avant envoi)")
+                subject_prof = f"IAID — Notification enseignements ({mois_min}→{mois_max}) : {len(gprof)} module(s)"
 
-            # Liste des enseignants disponibles dans le lot
-            profs_dispo = sorted(
-                alerts_send["Responsable"]
-                .astype(str)
-                .replace({"nan": "", "None": ""})
-                .fillna("")
-                .str.strip()
-                .unique()
-                .tolist()
-            )
-            profs_dispo = [p for p in profs_dispo if p != ""]
+                try:
+                    send_email_reminder(
+                        smtp_host=st.secrets["SMTP_HOST"],
+                        smtp_port=int(st.secrets["SMTP_PORT"]),
+                        smtp_user=st.secrets["SMTP_USER"],
+                        smtp_pass=st.secrets["SMTP_PASS"],
+                        sender=st.secrets["SMTP_FROM"],
+                        recipients=[mail],
+                        subject=subject_prof,
+                        body_text=body_text_prof,
+                        body_html=None,  # ✅ simple & fiable
+                    )
+                    sent += 1
+                except Exception as e:
+                    errors += 1
+                    st.error(f"Erreur envoi à {prof} ({mail}) : {e}")
 
-            # Sélection (par défaut = tous)
-            profs_sel = st.multiselect(
-                "Enseignants à notifier",
-                options=profs_dispo,
-                default=profs_dispo,
-                key="profs_sel"
-            )
+            if sent:
+                st.success(f"✅ Emails envoyés à {sent} enseignant(s).")
+            if errors:
+                st.warning(f"⚠️ {errors} envoi(s) en échec.")
 
-            # Appliquer filtre enseignants au lot
-            alerts_send = alerts_send[alerts_send["Responsable"].isin(profs_sel)].copy()
-
-            # Petit résumé
-            st.caption(f"📌 Enseignants sélectionnés : {len(profs_sel)} | Lignes à envoyer : {len(alerts_send)}")
-
-
-
-
-            # 4) Bouton d'envoi (admin seulement)
-            st.write("### 🚀 Envoyer les alertes aux enseignants")
-
-            # Réutilise ton système admin PIN (déjà défini dans la sidebar)
-            # is_admin doit exister (tu l'as dans la sidebar: is_admin = (pin == ADMIN_PIN))
-
-            if st.button("📩 Envoyer maintenant aux enseignants", key="send_prof_alerts"):
-                if not st.session_state.get("is_admin", False):
-                    st.error("Accès refusé : PIN incorrect.")
-                    st.stop()
-
-                else:
-                    if alerts_send.empty:
-                        st.warning("Aucune ligne à envoyer (vérifie le lot et la sélection des enseignants).")
-                        st.stop()
-
-                    # Grouper par enseignant et envoyer 1 mail chacun
-                    sent = 0
-                    errors = 0
-
-                    # On envoie seulement si Email non vide
-                    grp = alerts_send[alerts_send["Email"] != ""].groupby(["Responsable", "Email"])
-
-
-                    for (prof, mail), gprof in grp:
-                        # Construire contenu texte simple
-                        lignes = []
-                        for _, r in gprof.sort_values(["Statut_auto", "Écart"]).iterrows():
-                            lignes.append(
-                                f"- {r['Classe']} | {r.get('Semestre','')} | {r.get('Type','')} | {r['Matière']} | "
-                                f"VHP={int(r['VHP'])} VHR={int(r['VHR'])} Écart={int(r['Écart'])} | {r['Statut_auto']} | {r.get('Raison_alerte','')}"
-                            )
-
-                        body_text_prof = (
-                            f"IAID — Notification de suivi des enseignements\n"
-                            f"Période : {mois_min} → {mois_max}\n\n"
-                            f"Bonjour {prof},\n\n"
-                            f"Vous avez {len(gprof)} matière(s) concernée(s) par la notification suivante : {lot}.\n\n"
-                            f"Aucune action n’est requise. Message transmis à titre informatif.\n\n"
-                            + "\n".join(lignes)
-                            + "\n\n"
-                            f"Département IA & Ingénierie des Données (IAID)\n"
-                        )
-
-
-                        subject_prof = f"IAID — Alerte enseignements ({mois_min}→{mois_max}) : {len(gprof)} module(s)"
-
-                        # ==============================
-                        # HTML PROF (STYLE DG) — CORPS JOLI
-                        # ==============================
-                        def statut_chip_html(statut: str) -> str:
-                            s = str(statut).strip()
-                            if s == "Terminé":
-                                return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(30,142,62,0.12);color:#1E8E3E;border:1px solid rgba(30,142,62,0.25);">✅ Terminé</span>'
-                            if s == "En cours":
-                                return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(242,153,0,0.14);color:#B26A00;border:1px solid rgba(242,153,0,0.30);">🟠 En cours</span>'
-                            return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(217,48,37,0.12);color:#D93025;border:1px solid rgba(217,48,37,0.25);">🔴 Non démarré</span>'
-
-                        lignes_html = ""
-                        for _, r in gprof.sort_values(["Écart"], ascending=True).iterrows():
-                            # Sécuriser valeurs
-                            classe = str(r.get("Classe", ""))
-                            sem = str(r.get("Semestre", ""))
-                            mat = str(r.get("Matière", ""))[:70]
-                            vhp = int(float(r.get("VHP", 0) or 0))
-                            vhr = int(float(r.get("VHR", 0) or 0))
-                            ec  = int(float(r.get("Écart", 0) or 0))
-                            raison = str(r.get("Raison_alerte", ""))
-                            statut = str(r.get("Statut_auto", ""))
-
-                            ec_color = "#D93025" if ec <= thresholds["ecart_critique"] else "#0F172A"
-
-                            lignes_html += f"""
-                            <tr>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{classe}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{sem}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{mat}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;">{vhp}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;">{vhr}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;font-weight:900;color:{ec_color};">{ec}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{statut_chip_html(statut)}</td>
-                              <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{raison}</td>
-                            </tr>
-                            """
-
-                        body_html_prof = f"""
-                            <!doctype html>
-                            <html>
-                            <body style="margin:0;padding:0;background:#0B3D91;">
-                            <div style="background:linear-gradient(180deg,#0B3D91 0%,#134FA8 100%);padding:34px 12px;">
-
-                                <div style="max-width:860px;margin:0 auto;background:#FFFFFF;border-radius:20px;
-                                            box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden;
-                                            font-family:Arial,Helvetica,sans-serif;color:#0F172A;">
-
-                                <!-- HEADER -->
-                                <div style="padding:22px 26px;background:linear-gradient(90deg,#0B3D91,#1F6FEB);color:#FFFFFF;">
-                                    <div style="font-size:18px;font-weight:900;">
-                                    IAID — Notification Enseignant
-                                    </div>
-                                    <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
-                                    {lot} • Période : {mois_min} → {mois_max}
-                                    </div>
-                                    <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.9;">
-                                    Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
-                                    </div>
-                                </div>
-
-                                <!-- CONTENT -->
-                                <div style="padding:26px;line-height:1.55;">
-
-                                    <p style="margin-top:0;">
-                                    Bonjour <b>{prof}</b>,
-                                    </p>
-
-                                    <p>
-                                    Vous avez <b>{len(gprof)} matière(s)</b> concernée(s) par la notification suivante :
-                                    <b>{lot}</b>.
-                                    </p>
-
-                                    <div style="margin:14px 0;background:#F6F8FC;border:1px solid #E3E8F0;border-radius:14px;padding:14px 16px;">
-                                    <div style="font-weight:900;color:#0B3D91;margin-bottom:6px;">📌 Information</div>
-                                    <div style="font-size:13px;">
-                                        Aucune action n’est requise. Message transmis à titre informatif.
-                                    </div>
-                                    </div>
-
-                                    <!-- TABLE -->
-                                    <div style="margin:18px 0;border:1px solid #E3E8F0;border-radius:14px;overflow:hidden;">
-                                    <table style="border-collapse:collapse;width:100%;font-size:13px;">
-                                        <thead>
-                                        <tr style="background:#F6F8FC;">
-                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Classe</th>
-                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Sem</th>
-                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Matière</th>
-                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHP</th>
-                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHR</th>
-                                            <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">Écart</th>
-                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Statut</th>
-                                            <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Raison</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {lignes_html}
-                                        </tbody>
-                                    </table>
-                                    </div>
-
-                                    <p style="font-size:13px;color:#475569;">
-                                    Ce message est généré automatiquement dans le cadre du pilotage académique.
-                                    </p>
-
-                                </div>
-
-                                <!-- FOOTER -->
-                                <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
-                                            font-size:12px;color:#475569;text-align:center;">
-                                    Département IA &amp; Ingénierie des Données (IAID)
-                                </div>
-
-                                </div>
-                            </div>
-                            </body>
-                            </html>
-                            """
-
-
-
-                        # HTML léger (facultatif). Ici on envoie juste texte (plus fiable).
-                        try:
-                            send_email_reminder(
-                                smtp_host=st.secrets["SMTP_HOST"],
-                                smtp_port=int(st.secrets["SMTP_PORT"]),
-                                smtp_user=st.secrets["SMTP_USER"],
-                                smtp_pass=st.secrets["SMTP_PASS"],
-                                sender=st.secrets["SMTP_FROM"],
-                                recipients=[mail],
-                                subject=subject_prof,
-                                body_text=body_text_prof,
-                                body_html=body_html_prof
-                            )
-                            sent += 1
-                        except Exception as e:
-                            errors += 1
-                            st.error(f"Erreur envoi à {prof} ({mail}) : {e}")
-
-                    if sent > 0:
-                        st.success(f"✅ Alertes envoyées à {sent} enseignant(s).")
-                    if errors > 0:
-                        st.warning(f"⚠️ {errors} envoi(s) en échec.")
-
-
-
-    with c2:
-        st.write("### Alerte “Non démarré” par classe")
-        nd = filtered[filtered["Statut_auto"]=="Non démarré"].groupby("Classe").size().sort_values(ascending=False)
+    # =========================================================
+    # 3) GRAPHIQUES
+    # =========================================================
+    with t3:
+        st.write("### Non démarré — par classe")
+        nd = tmp[tmp["Alerte_non_demarre"]].groupby("Classe").size().sort_values(ascending=False)
         st.bar_chart(nd)
 
-        st.write("### Alerte “Retards critiques” par classe")
-        crit = filtered[filtered["Écart"] <= thresholds["ecart_critique"]].groupby("Classe").size().sort_values(ascending=False)
+        st.write("### Retards critiques — par classe")
+        crit = tmp[tmp["Alerte_retard_critique"]].groupby("Classe").size().sort_values(ascending=False)
         st.bar_chart(crit)
+
+        st.write("### Fin dépassée — par classe")
+        fin = tmp[tmp["Alerte_fin_depassee"]].groupby("Classe").size().sort_values(ascending=False)
+        st.bar_chart(fin)
+
 
 # ====== QUALITÉ DES DONNÉES ======
 with tab_qualite:
