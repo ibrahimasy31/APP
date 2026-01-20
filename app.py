@@ -1123,6 +1123,22 @@ def render_badged_table(df: pd.DataFrame, columns: List[str], title: str = "") -
     html = tmp[columns].to_html(escape=False, index=False, classes="iaid-table")
     st.markdown(f'<div class="table-wrap">{html}</div>', unsafe_allow_html=True)
 
+@st.cache_data(show_spinner=False, max_entries=50)
+def fetch_headers(url: str, cache_bust: str) -> dict:
+    headers = {
+        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
+    r = requests.head(url.strip(), timeout=20, headers=headers, allow_redirects=True)
+    r.raise_for_status()
+    return dict(r.headers)
+
+@st.cache_data(show_spinner=False, max_entries=20)
+def fetch_excel_if_changed(url: str, etag_or_lm: str) -> bytes:
+    # si etag_or_lm change -> refetch, sinon cache streamlit
+    return fetch_excel_from_url(url, etag_or_lm)
+
 
 # -----------------------------
 # Lecture Excel multi-feuilles
@@ -1502,6 +1518,9 @@ with st.sidebar:
         uploaded = st.file_uploader("Importer le fichier Excel (.xlsx)", type=["xlsx"])
         if uploaded is not None:
             file_bytes = uploaded.getvalue()
+            import hashlib
+            digest = hashlib.md5(file_bytes).hexdigest()[:10]
+            st.caption(f"📦 Fichier: {len(file_bytes)/1024:.1f} KB | md5: {digest}")
             source_label = f"Upload: {uploaded.name}"
 
     sidebar_card_end()
