@@ -1706,7 +1706,7 @@ with st.sidebar:
             </div>
 
       
-          <!-- CONTENU -->
+         <!-- CONTENU -->
             <div style="padding:26px;line-height:1.55;">
 
             <p style="margin-top:0;">
@@ -1729,6 +1729,45 @@ with st.sidebar:
                 <li>L’accès à des indicateurs synthétiques facilitant le pilotage décisionnel</li>
                 <li>La génération de rapports consolidés (PDF officiels et exports Excel)</li>
             </ul>
+
+            <!-- BOUTON (bleu) -->
+            <div style="margin:22px 0;text-align:center;">
+                <a href="{dashboard_url}" style="
+                display:inline-block;
+                background:#0B3D91;
+                color:#FFFFFF !important;
+                text-decoration:none;
+                padding:14px 22px;
+                border-radius:14px;
+                font-weight:900;
+                font-size:14px;
+                box-shadow:0 10px 24px rgba(14,30,37,0.25);
+                ">
+                Ouvrir le Dashboard IAID →
+                </a>
+            </div>
+
+            <!-- INFOS CLÉS -->
+            <div style="
+                margin-top:24px;
+                background:#F6F8FC;
+                border:1px solid #E3E8F0;
+                border-radius:14px;
+                padding:14px 16px;
+            ">
+                <div style="font-weight:900;color:#0B3D91;margin-bottom:8px;">
+                📌 Informations clés
+                </div>
+                <div style="font-size:13px;"><b>Période :</b> {today.strftime('%m/%Y')}</div>
+                <div style="font-size:13px;">
+                <b>Lien :</b>
+                <a href="{dashboard_url}" style="color:#1F6FEB;text-decoration:none;">
+                    {dashboard_url}
+                </a>
+                </div>
+            </div>
+
+            </div>
 
 
             <!-- INFOS CLÉS -->
