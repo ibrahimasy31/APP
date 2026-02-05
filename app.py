@@ -1645,9 +1645,16 @@ with st.sidebar:
     Notification mensuelle — Pilotage des enseignements • {today.strftime('%m/%Y')}
     Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
 
-    Bonjour Madame, Monsieur,
+    Madame la Directrice,
 
-    Dans le cadre du pilotage académique, nous vous invitons à consulter le Dashboard IAID (avancement par classe et par matière, alertes, synthèses et exports officiels).
+    Dans le cadre du suivi mensuel du pilotage académique, nous vous transmettons l’accès au Dashboard IAID, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
+
+    Ce tableau de bord permet notamment :
+    - Le suivi de l’état d’avancement des enseignements par classe et par matière
+    - L’analyse des volumes horaires prévus et réalisés
+    - L’identification des situations nécessitant une attention particulière (retards, non démarrés, écarts critiques)
+    - L’accès à des indicateurs synthétiques facilitant le pilotage décisionnel
+    - La génération de rapports consolidés (PDF officiels et exports Excel)
 
     Ouvrir le Dashboard IAID →
     {dashboard_url}
@@ -1656,6 +1663,7 @@ with st.sidebar:
     Période : {today.strftime('%m/%Y')}
     Lien : {dashboard_url}
     """.strip()
+
 
     body_html = f"""
     <!doctype html>
