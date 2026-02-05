@@ -36,9 +36,6 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
-import plotly.io as pio
-pio.templates.default = "plotly_white"
-
 
 
 st.set_page_config(
@@ -292,25 +289,6 @@ st.markdown(
   --bad:#D93025;
 
   --focus:#5AA2FF;
-}
-
-/* ==========================================
-   VERROUILLAGE ANTI-DARK-MODE (multi-navigateurs)
-   ========================================== */
-:root, html, body, .stApp{
-  color-scheme: light !important;     /* empêche les UA styles sombres */
-  background-color: var(--bg) !important;
-}
-
-@media (prefers-color-scheme: dark){
-  :root, html, body, .stApp{
-    color-scheme: light !important;
-    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
-  }
-  body, .stApp, p, span, div, label, small,
-  h1, h2, h3, h4, h5, h6{
-    color: var(--text) !important;    /* force texte sombre lisible */
-  }
 }
 
 /* -----------------------------
