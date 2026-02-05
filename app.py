@@ -630,42 +630,6 @@ button[kind="primary"] div{
   border-color: rgba(217,48,37,0.25);
 }
 
-/* ===== FIX BLACK BACKGROUND (charts & tables) ===== */
-:root { color-scheme: light !important; }
-html, body { color-scheme: light !important; }
-
-/* Conteneurs des graphiques (Plotly + Vega/Altair + charts streamlit) */
-div[data-testid="stPlotlyChart"],
-div[data-testid="stVegaLiteChart"],
-div[data-testid="stArrowVegaLiteChart"],
-div[data-testid="stLineChart"],
-div[data-testid="stBarChart"],
-div[data-testid="stAreaChart"]{
-  background: #FFFFFF !important;
-  border: 1px solid #E3E8F0 !important;
-  border-radius: 16px !important;
-  padding: 10px !important;
-}
-
-/* Canvas/SVG/iframe parfois rendus noirs sur certains PC */
-div[data-testid="stPlotlyChart"] iframe,
-div[data-testid="stPlotlyChart"] canvas,
-div[data-testid="stPlotlyChart"] svg,
-div[data-testid="stVegaLiteChart"] canvas,
-div[data-testid="stVegaLiteChart"] svg{
-  background: #FFFFFF !important;
-}
-
-/* DataFrame */
-div[data-testid="stDataFrame"]{
-  background: #FFFFFF !important;
-  border: 1px solid #E3E8F0 !important;
-  border-radius: 16px !important;
-}
-div[data-testid="stDataFrame"] *{
-  color: #0F172A !important;
-}
-
 </style>
 """,
 unsafe_allow_html=True
@@ -896,18 +860,6 @@ def fetch_excel_from_url(url: str, cache_bust: str) -> bytes:
 def make_long(df_period: pd.DataFrame) -> pd.DataFrame:
     return unpivot_months(df_period)
 
-def apply_plotly_white(fig):
-    fig.update_layout(
-        template="plotly_white",
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        font=dict(color="#0F172A"),
-        title=dict(font=dict(color="#0B3D91")),
-        legend=dict(font=dict(color="#0F172A")),
-    )
-    fig.update_xaxes(gridcolor="#E3E8F0", zerolinecolor="#E3E8F0", linecolor="#CBD5E1")
-    fig.update_yaxes(gridcolor="#E3E8F0", zerolinecolor="#E3E8F0", linecolor="#CBD5E1")
-    return fig
 # -----------------------------
 # Rappel mensuel DG/DGE (Email)
 # -----------------------------
@@ -2114,18 +2066,14 @@ with tab_overview:
 
     fig = px.bar(g, x="Classe", y="Taux (%)", title="Avancement moyen (%) par classe")
     fig.update_layout(height=420, margin=dict(l=10, r=10, t=60, b=10))
-    fig = apply_plotly_white(fig)
-
-    st.plotly_chart(fig, use_container_width=True, theme=None)
-
+    st.plotly_chart(fig, use_container_width=True)
 
     st.write("### Répartition des statuts")
     stat = filtered["Statut_auto"].value_counts().reset_index()
     stat.columns = ["Statut", "Nombre"]
     fig = px.pie(stat, names="Statut", values="Nombre", title="Répartition des statuts")
     fig.update_layout(height=420, margin=dict(l=10, r=10, t=60, b=10))
-    fig = apply_plotly_white(fig)
-    st.plotly_chart(fig, use_container_width=True, theme=None)
+    st.plotly_chart(fig, use_container_width=True)
 
     # =========================================================
     # ✅ TOP RETARDS (st.dataframe + emojis) — VERSION PRO
