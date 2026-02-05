@@ -1747,28 +1747,6 @@ with st.sidebar:
                 </a>
             </div>
 
-            <!-- INFOS CLÉS -->
-            <div style="
-                margin-top:24px;
-                background:#F6F8FC;
-                border:1px solid #E3E8F0;
-                border-radius:14px;
-                padding:14px 16px;
-            ">
-                <div style="font-weight:900;color:#0B3D91;margin-bottom:8px;">
-                📌 Informations clés
-                </div>
-                <div style="font-size:13px;"><b>Période :</b> {today.strftime('%m/%Y')}</div>
-                <div style="font-size:13px;">
-                <b>Lien :</b>
-                <a href="{dashboard_url}" style="color:#1F6FEB;text-decoration:none;">
-                    {dashboard_url}
-                </a>
-                </div>
-            </div>
-
-            </div>
-
 
             <!-- INFOS CLÉS -->
             <div style="
