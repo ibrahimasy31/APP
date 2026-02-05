@@ -37,7 +37,22 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
 import plotly.io as pio
-pio.templates.default = "plotly_white"
+import plotly.io as pio
+
+pio.templates["iaid"] = dict(
+    layout=dict(
+        colorway=[
+            "#0B3D91",   # bleu IAID principal
+            "#1F6FEB",
+            "#5AA2FF",
+            "#8EC5FF",
+            "#BBDFFF"
+        ]
+    )
+)
+
+pio.templates.default = "plotly_white+iaid"
+
 
 
 st.set_page_config(
@@ -266,6 +281,21 @@ st.set_page_config(
 st.markdown(
 """
 <style>
+/* Force un rendu "light" même si le navigateur est en dark mode */
+:root, html, body, .stApp {
+  color-scheme: light !important;
+}
+
+/* Si un navigateur applique prefers-color-scheme: dark, on neutralise */
+@media (prefers-color-scheme: dark) {
+  html, body, .stApp {
+    background: #F6F8FC !important;
+  }
+  body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 {
+    color: #0F172A !important;
+  }
+}
+
 /* =========================================================
    IAID — THÈME BLEU EXÉCUTIF DG (FINAL)
    Lisibilité absolue • Tous navigateurs • Streamlit Cloud
