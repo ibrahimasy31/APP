@@ -36,6 +36,8 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
+import plotly.io as pio
+pio.templates.default = "plotly_white"
 
 
 st.set_page_config(
