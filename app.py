@@ -1705,35 +1705,31 @@ with st.sidebar:
             </div>
             </div>
 
-            <!-- CONTENU -->
+      
+          <!-- CONTENU -->
             <div style="padding:26px;line-height:1.55;">
-            
+
             <p style="margin-top:0;">
-                Bonjour Madame, Monsieur,
+                Madame la Directrice,
             </p>
 
             <p>
-                Dans le cadre du <b>pilotage académique</b>, nous vous invitons à consulter le
-                <b>Dashboard IAID</b> (avancement par classe et par matière, alertes, synthèses
-                et exports officiels).
+                Dans le cadre du <b>suivi mensuel du pilotage académique</b>, nous vous transmettons l’accès au
+                <b>Dashboard IAID</b>, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
             </p>
 
-            <!-- BOUTON -->
-            <div style="margin:22px 0;text-align:center;">
-                <a href="{dashboard_url}" style="
-                    display:inline-block;
-                    background:#0B3D91;
-                    color:#FFFFFF;
-                    text-decoration:none;
-                    padding:14px 22px;
-                    border-radius:14px;
-                    font-weight:900;
-                    font-size:14px;
-                    box-shadow:0 10px 24px rgba(14,30,37,0.25);
-                ">
-                Ouvrir le Dashboard IAID →
-                </a>
-            </div>
+            <p style="margin:0;">
+                Ce tableau de bord permet notamment :
+            </p>
+
+            <ul style="margin:10px 0 0 18px;padding:0;">
+                <li>Le suivi de l’état d’avancement des enseignements par classe et par matière</li>
+                <li>L’analyse des volumes horaires prévus et réalisés (VHP / VHR)</li>
+                <li>L’identification des situations nécessitant une attention particulière (retards, non démarrés, écarts critiques)</li>
+                <li>L’accès à des indicateurs synthétiques facilitant le pilotage décisionnel</li>
+                <li>La génération de rapports consolidés (PDF officiels et exports Excel)</li>
+            </ul>
+
 
             <!-- INFOS CLÉS -->
             <div style="
