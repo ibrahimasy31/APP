@@ -1950,33 +1950,33 @@ else:
         "</div>"
     )
 
-st.markdown(
-    f"""
-    <div class="iaid-header">
-      <div class="iaid-hrow">
-        <div class="iaid-hleft">
-          {logo_html}
-          <div>
-            <div class="iaid-htitle">{CFG["header_title"]}</div>
-            <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
-          </div>
+    st.markdown(
+        f"""
+        <div class="iaid-header">
+        <div class="iaid-hrow">
+            <div class="iaid-hleft">
+            {logo_html}
+            <div>
+                <div class="iaid-htitle">{CFG["header_title"]}</div>
+                <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
+            </div>
+            </div>
+
+            <div class="iaid-meta">
+            <div>Dernière mise à jour</div>
+            <div style="font-size:13px;font-weight:950;">{now_str}</div>
+            </div>
         </div>
 
-        <div class="iaid-meta">
-          <div>Dernière mise à jour</div>
-          <div style="font-size:13px;font-weight:950;">{now_str}</div>
+        <div class="iaid-badges">
+            <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+            <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+            <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
         </div>
-      </div>
-
-      <div class="iaid-badges">
-        <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
-        <div class="iaid-badge">KPIs • Alertes • Qualité</div>
-        <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 st.markdown(
