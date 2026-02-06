@@ -502,44 +502,7 @@ span[data-baseweb="tag"]{
   font-size: 12px;
   font-weight: 850;
 }
-/* ✅ MANQUAIT DANS TON CSS ACTIF */
-.iaid-hrow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-}
 
-.iaid-hleft{
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
-
-.iaid-logo{
-  width:54px;
-  height:54px;
-  border-radius:16px;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.24);
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.iaid-logo img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.iaid-meta{
-  text-align:right;
-  font-size:12px;
-  opacity:.95;
-  font-weight:800;
-}
 
 /* -----------------------------
    KPI CARDS
