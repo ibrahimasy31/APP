@@ -527,6 +527,57 @@ button[kind="secondary"] *{
   text-decoration: none !important;
 }
 
+/* -----------------------------
+   HEADER DG — LAYOUT (FIX)
+------------------------------*/
+.iaid-hrow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+}
+
+.iaid-hleft{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.iaid-logo{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.30);
+  font-weight: 950;
+  flex: 0 0 auto;
+}
+
+.iaid-meta{
+  text-align:right;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.28);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 850;
+  flex: 0 0 auto;
+  min-width: 170px;
+}
+
+@media (max-width: 900px){
+  .iaid-hrow{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .iaid-meta{
+    text-align:left;
+    width: 100%;
+  }
+}
 
 """,
 unsafe_allow_html=True
@@ -1715,8 +1766,10 @@ with st.sidebar:
 # =========================================================
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
+from zoneinfo import ZoneInfo
 
-now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+now_str = dt.datetime.now(ZoneInfo("Africa/Dakar")).strftime("%d/%m/%Y %H:%M")
+
 
 st.markdown(
 f"""
