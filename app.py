@@ -741,39 +741,92 @@ button[kind="secondary"] *{
 }
 
 /* =========================
-   ✅ BANDEAU SIMPLE IAID
+   ✅ BANDEAU HAUT + LOGO TEXTE
 ========================= */
 .iaid-banner{
   background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
-  border-radius: 18px;
-  padding: 18px 22px;
-  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
+  border-radius: 22px;
+  padding: 24px 26px;
+  box-shadow: 0 18px 44px rgba(14,30,37,0.22);
   margin: 0 0 14px 0;
+  position: relative;
+  overflow: hidden;
 }
-.iaid-banner .title{
+
+.iaid-banner-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap:16px;
+}
+
+.iaid-left{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+}
+
+/* ✅ LOGO TEXTE */
+.iaid-logo{
+  width:64px;
+  height:64px;
+  border-radius:18px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.30);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+}
+
+.iaid-logo-text{
   color:#FFFFFF !important;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 950;
+  letter-spacing: .8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+.iaid-title{
+  color:#FFFFFF !important;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1.1;
   text-shadow: 0 1px 2px rgba(0,0,0,0.22);
 }
-.iaid-banner .subtitle{
+
+.iaid-subtitle{
   color: rgba(255,255,255,0.95) !important;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 13px;
   font-weight: 750;
   line-height: 1.35;
   text-shadow: 0 1px 2px rgba(0,0,0,0.18);
 }
-.iaid-banner .iaid-badges{ margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap; }
-.iaid-banner .iaid-badge{
+
+.iaid-meta{
+  text-align:right;
+  color: rgba(255,255,255,0.95) !important;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.iaid-badges{
+  margin-top: 14px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.iaid-badge{
   background: rgba(255,255,255,0.18);
   border: 1px solid rgba(255,255,255,0.32);
   color:#FFFFFF !important;
-  padding: 6px 10px;
+  padding: 7px 11px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 850;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
 }
 
 
@@ -1965,13 +2018,30 @@ with st.sidebar:
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+
 st.markdown(
     f"""
     <div class="iaid-banner">
-      <div class="title">{CFG["department_long"]}</div>
-      <div class="subtitle">
-        {CFG["header_subtitle"]}
+      <div class="iaid-banner-row">
+
+        <div class="iaid-left">
+          <div class="iaid-logo">
+            <div class="iaid-logo-text">{CFG["dept_code"]}</div>
+          </div>
+
+          <div>
+            <div class="iaid-title">{CFG["department_long"]}</div>
+            <div class="iaid-subtitle">{CFG["header_subtitle"]}</div>
+          </div>
+        </div>
+
+        <div class="iaid-meta">
+          <div>Dernière mise à jour</div>
+          <div style="font-size:13px;font-weight:950;">{now_str}</div>
+        </div>
+
       </div>
+
       <div class="iaid-badges">
         <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
         <div class="iaid-badge">KPIs • Alertes • Qualité</div>
