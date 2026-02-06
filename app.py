@@ -583,17 +583,6 @@ button[kind="secondary"] *{
   }
 }
 
-/* Force le rendu du contenu du header (évite styles globaux qui cassent) */
-.iaid-header, .iaid-header *{
-  background: transparent !important;
-  color: #FFFFFF !important;
-}
-
-/* Mais on garde les badges avec leur fond */
-.iaid-header .iaid-badge{
-  background: rgba(255,255,255,0.18) !important;
-  border: 1px solid rgba(255,255,255,0.32) !important;
-}
 
 
 """,
