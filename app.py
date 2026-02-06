@@ -544,26 +544,18 @@ button[kind="secondary"] *{
   min-width: 0;
 }
 
-.iaid-meta{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-
-  color: #FFFFFF !important;
-
-  padding: 0 !important;
-  border-radius: 0 !important;
-
-  text-align:right;
-  font-weight: 850;
+.iaid-logo{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.30);
+  font-weight: 950;
+  flex: 0 0 auto;
 }
-.iaid-header .iaid-meta,
-.iaid-header .iaid-meta *{
-  background: transparent !important;
-  color: #FFFFFF !important;
-  border: none !important;
-}
-
 
 .iaid-meta{
   text-align:right;
@@ -1774,10 +1766,8 @@ with st.sidebar:
 # =========================================================
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
-from zoneinfo import ZoneInfo
 
-now_str = dt.datetime.now(ZoneInfo("Africa/Dakar")).strftime("%d/%m/%Y %H:%M")
-
+now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 st.markdown(
 f"""
