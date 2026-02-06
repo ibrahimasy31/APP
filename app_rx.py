@@ -1343,7 +1343,7 @@ def build_pdf_report(
         # Table compacte (top retards)
         gg = g.sort_values("Écart").copy()
         rows = [["Matière", "VHP", "VHR", "Écart", "Taux", "Statut"]]
-        for _, r in gg.head(15).iterrows():
+        for _, r in gg.head(20).iterrows():
             rows.append([str(r["Matière"])[:45], f"{r['VHP']:.0f}", f"{r['VHR']:.0f}", f"{r['Écart']:.0f}", f"{(r['Taux']*100):.0f}%", str(r["Statut_auto"])])
         t = Table(rows, colWidths=[8.6*cm, 1.3*cm, 1.3*cm, 1.3*cm, 1.3*cm, 2.2*cm])
         t.setStyle(TableStyle([
