@@ -485,7 +485,47 @@ button[kind="primary"] div{
   border-color: rgba(217,48,37,0.25);
 }
 
+/* =========================================================
+   ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
+   - force couleur texte + svg + icônes
+   - couvre stButton / stDownloadButton / kind="primary"
+========================================================= */
 
+.stButton > button,
+.stDownloadButton > button,
+button[kind="primary"],
+button[kind="secondary"]{
+  background: var(--blue) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 10px 16px !important;
+  font-weight: 900 !important;
+}
+
+/* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
+   et les icônes en svg -> on force TOUS les enfants */
+.stButton > button *,
+.stDownloadButton > button *,
+button[kind="primary"] *,
+button[kind="secondary"] *{
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* hover */
+.stButton > button:hover,
+.stDownloadButton > button:hover{
+  background: var(--blue2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+}
+
+/* sécurité liens internes download */
+.stDownloadButton a{
+  text-decoration: none !important;
+}
 
 /* -----------------------------
    HEADER DG — LAYOUT (FIX)
@@ -519,14 +559,18 @@ button[kind="primary"] div{
 
 .iaid-meta{
   text-align:right;
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.28);
-  padding: 10px 12px;
-  border-radius: 14px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  padding: 0 !important;
+  border-radius: 0 !important;
+
   font-weight: 850;
   flex: 0 0 auto;
   min-width: 170px;
 }
+
 
 @media (max-width: 900px){
   .iaid-hrow{
@@ -538,6 +582,19 @@ button[kind="primary"] div{
     width: 100%;
   }
 }
+
+/* Force le rendu du contenu du header (évite styles globaux qui cassent) */
+.iaid-header, .iaid-header *{
+  background: transparent !important;
+  color: #FFFFFF !important;
+}
+
+/* Mais on garde les badges avec leur fond */
+.iaid-header .iaid-badge{
+  background: rgba(255,255,255,0.18) !important;
+  border: 1px solid rgba(255,255,255,0.32) !important;
+}
+
 
 """,
 unsafe_allow_html=True
