@@ -1369,6 +1369,236 @@ def build_pdf_report(
 
     return out.getvalue()
 
+
+def build_pdf_observations_report(
+    df: pd.DataFrame,
+    title: str,
+    mois_couverts: List[str],
+    logo_bytes: Optional[bytes] = None,
+    author_name: str = "",
+    assistant_name: str = "",
+    department: str = "",
+    institution: str = "",
+    max_rows_per_class: int = 9999,  # mets 18 si tu veux limiter
+) -> bytes:
+    styles = getSampleStyleSheet()
+    H1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=16, spaceAfter=10)
+    H2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=12, spaceAfter=6)
+    P  = ParagraphStyle("P", parent=styles["BodyText"], fontSize=9, leading=12)
+    Small = ParagraphStyle("Small", parent=styles["BodyText"], fontSize=8, leading=10)
+
+    out = io.BytesIO()
+    doc = SimpleDocTemplate(
+        out,
+        pagesize=A4,
+        leftMargin=1.6*cm, rightMargin=1.6*cm,
+        topMargin=1.4*cm, bottomMargin=1.4*cm
+    )
+
+    story = []
+
+    # -----------------------------
+    # Filtrage : uniquement lignes avec Observations
+    # -----------------------------
+    d = df.copy()
+    if "Observations" not in d.columns:
+        d["Observations"] = ""
+
+    d["Observations"] = (
+        d["Observations"].astype(str)
+        .replace({"nan": "", "None": ""})
+        .fillna("")
+        .str.replace("\n", " ", regex=False)
+        .str.strip()
+    )
+
+    d = d[d["Observations"].str.len() > 0].copy()
+
+    now_dt = dt.datetime.now()
+    date_gen = now_dt.strftime("%d/%m/%Y %H:%M")
+    periode_str = " – ".join(mois_couverts) if mois_couverts else "—"
+
+    # -----------------------------
+    # Couverture officielle (même style que ton PDF principal)
+    # -----------------------------
+    logo_cell = ""
+    if logo_bytes:
+        try:
+            img = RLImage(io.BytesIO(logo_bytes))
+            img.drawHeight = 2.2*cm
+            img.drawWidth  = 2.2*cm
+            logo_cell = img
+        except:
+            logo_cell = ""
+
+    header_rows = [[
+        logo_cell,
+        Paragraph(
+            f"""
+            <b>{institution}</b><br/>
+            {department}<br/>
+            <font size="9" color="#475569">
+            Rapport officiel — Suivi des enseignements (Observations)<br/>
+            </font>
+            """,
+            P
+        ),
+        Paragraph(
+            f"""
+            <b>Date :</b> {date_gen}<br/>
+            <b>Période :</b> {periode_str}<br/>
+            <b>Référence :</b> {department.split('(')[-1].replace(')','').strip() or 'DEPT'}-OBS-{now_dt.strftime("%Y%m")}
+            """,
+            P
+        )
+    ]]
+
+    header_tbl = Table(header_rows, colWidths=[2.6*cm, 9.4*cm, 4.0*cm])
+    header_tbl.setStyle(TableStyle([
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+        ("ALIGN", (0,0), (0,0), "LEFT"),
+        ("ALIGN", (2,0), (2,0), "RIGHT"),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+    ]))
+    story.append(header_tbl)
+
+    banner = Table(
+        [[Paragraph(f"<b>{title}</b>", ParagraphStyle("Banner", parent=H1, textColor=colors.white, fontSize=14))]],
+        colWidths=[15.9*cm]
+    )
+    banner.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#0B3D91")),
+        ("LEFTPADDING", (0,0), (-1,-1), 10),
+        ("RIGHTPADDING", (0,0), (-1,-1), 10),
+        ("TOPPADDING", (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+    ]))
+    story.append(banner)
+    story.append(Spacer(1, 10))
+
+    sign_tbl = Table(
+        [[
+            Paragraph(f"<b>Auteur :</b> {author_name}<br/><font size='8' color='#475569'>Chef de Département</font>", P),
+            Paragraph(f"<b>Assistante :</b> {assistant_name}<br/><font size='8' color='#475569'>Support administratif</font>", P),
+        ]],
+        colWidths=[7.9*cm, 8.0*cm]
+    )
+    sign_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#F6F8FC")),
+        ("BOX", (0,0), (-1,-1), 0.4, colors.HexColor("#E3E8F0")),
+        ("INNERGRID", (0,0), (-1,-1), 0.25, colors.HexColor("#E3E8F0")),
+        ("LEFTPADDING", (0,0), (-1,-1), 10),
+        ("RIGHTPADDING", (0,0), (-1,-1), 10),
+        ("TOPPADDING", (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+    ]))
+    story.append(sign_tbl)
+    story.append(Spacer(1, 12))
+
+    # -----------------------------
+    # Si aucune observation
+    # -----------------------------
+    if d.empty:
+        story.append(Paragraph("Aucune observation renseignée sur la période sélectionnée.", P))
+        story.append(Paragraph("Le suivi des enseignements par observations ne peut pas être établi sans commentaires.", Small))
+
+        def _footer(canvas, doc_):
+            canvas.saveState()
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(colors.HexColor("#475569"))
+            canvas.drawString(1.6*cm, 1.0*cm, f"{department} — Suivi des enseignements (Observations)")
+            canvas.drawRightString(19.4*cm, 1.0*cm, f"Généré le {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}  |  Page {doc_.page}")
+            canvas.restoreState()
+
+        doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+        return out.getvalue()
+
+    # -----------------------------
+    # Synthèse (KPIs)
+    # -----------------------------
+    total_obs = len(d)
+    nb_classes = int(d["Classe"].nunique()) if "Classe" in d.columns else 0
+    nb_resp = int(d["Responsable"].nunique()) if "Responsable" in d.columns else 0
+
+    kpi_table = Table(
+        [
+            ["Modules avec observation", "Classes concernées", "Responsables concernés"],
+            [str(total_obs), str(nb_classes), str(nb_resp)],
+        ],
+        colWidths=[5.2*cm, 5.2*cm, 5.5*cm],
+    )
+    kpi_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#0B3D91")),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("ALIGN", (0,0), (-1,-1), "CENTER"),
+        ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+        ("BACKGROUND", (0,1), (-1,1), colors.whitesmoke),
+    ]))
+    story.append(kpi_table)
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("Détail — Observations par classe", H1))
+
+    # -----------------------------
+    # Détail par classe
+    # -----------------------------
+    if "Classe" not in d.columns:
+        d["Classe"] = "—"
+
+    # Tri utile : classe puis écart (retards) si existe
+    sort_cols = ["Classe"]
+    if "Écart" in d.columns:
+        sort_cols += ["Écart"]
+    d = d.sort_values(sort_cols, ascending=[True] + ([True] if "Écart" in d.columns else []))
+
+    for classe, g in d.groupby("Classe"):
+        story.append(Paragraph(f"Classe : {classe}", H2))
+
+        # limite optionnelle
+        gg = g.copy()
+        if max_rows_per_class and max_rows_per_class > 0:
+            gg = gg.head(max_rows_per_class)
+
+        rows = [["Sem", "Type", "Matière", "Responsable", "Observation"]]
+        for _, r in gg.iterrows():
+            sem = str(r.get("Semestre", ""))[:10]
+            typ = str(r.get("Type", ""))[:12]
+            mat = str(r.get("Matière", ""))[:40]
+            resp = str(r.get("Responsable", ""))[:24]
+            obs = str(r.get("Observations", ""))[:220]  # limite pour rester lisible
+
+            rows.append([sem, typ, mat, resp, obs])
+
+        t = Table(rows, colWidths=[1.0*cm, 1.2*cm, 4.3*cm, 3.0*cm, 6.4*cm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#F0F3F8")),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTSIZE", (0,0), (-1,-1), 8),
+            ("GRID", (0,0), (-1,-1), 0.25, colors.lightgrey),
+            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("LEFTPADDING", (0,0), (-1,-1), 6),
+            ("RIGHTPADDING", (0,0), (-1,-1), 6),
+            ("TOPPADDING", (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 10))
+
+        # si beaucoup de classes → page break pour lisibilité
+        story.append(Spacer(1, 4))
+
+    def _footer(canvas, doc_):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.HexColor("#475569"))
+        canvas.drawString(1.6*cm, 1.0*cm, f"{department} — Suivi des enseignements (Observations)")
+        canvas.drawRightString(19.4*cm, 1.0*cm, f"Généré le {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}  |  Page {doc_.page}")
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    return out.getvalue()
+
 # -----------------------------
 # UI
 # -----------------------------
@@ -2801,6 +3031,45 @@ with tab_export:
                 mime="application/pdf",
                 key="dl_pdf"
             )
+        st.write("### Export PDF (suivi des enseignements — Observations)")
+
+        pdf_obs_title = st.text_input(
+            "Titre du rapport Observations",
+            value=f"Suivi des enseignements — Observations ({CFG['dept_code']}) | {CFG['department_long']}",
+            key="pdf_obs_title"
+        )
+
+        max_rows_obs = st.number_input(
+            "Limite lignes par classe (Observations)",
+            min_value=0,
+            value=0,   # 0 = pas de limite
+            step=1,
+            help="0 = toutes les observations. Mets 18 si tu veux limiter."
+        )
+
+        if st.button("Générer le PDF Observations", key="btn_generate_pdf_obs"):
+            pdf_obs = build_pdf_observations_report(
+                df=filtered[
+                    ["Classe","Semestre","Type","Matière","Responsable","VHP","VHR","Écart","Taux","Statut_auto","Observations"]
+                ].copy(),
+                title=pdf_obs_title,
+                mois_couverts=mois_couverts,
+                logo_bytes=logo_bytes,
+                author_name=CFG["author_name"],
+                assistant_name=CFG["assistant_name"],
+                department=CFG["department_long"],
+                institution=CFG["institution"],
+                max_rows_per_class=int(max_rows_obs) if int(max_rows_obs) > 0 else 999999
+            )
+
+            st.download_button(
+                "⬇️ Télécharger le PDF Observations",
+                data=pdf_obs,
+                file_name=f"{export_prefix}_suivi_observations.pdf",
+                mime="application/pdf",
+                key="dl_pdf_obs"
+            )
+
 
 
 
