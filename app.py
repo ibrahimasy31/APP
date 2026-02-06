@@ -211,6 +211,12 @@ section[data-testid="stSidebar"]{
   align-items:center;
   margin: 8px 0 14px 0;
 }
+.sidebar-logo-wrap{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 20px 0;
+}
 
 .sidebar-logo-wrap img{
   width: 170px;        /* ⬅️ PLUS GRAND */
@@ -263,7 +269,6 @@ span[data-baseweb="tag"]{
   box-shadow: 0 16px 36px rgba(14,30,37,0.20);
   margin-bottom: 16px;
 }
-
 .iaid-header *{
   color: #FFFFFF !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.22);
@@ -284,63 +289,6 @@ span[data-baseweb="tag"]{
   border-radius: 999px;
   font-size: 12px;
   font-weight: 850;
-}
-
-/* -----------------------------
-   HEADER GRID (manquant)
-------------------------------*/
-.iaid-hrow{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:16px;
-}
-
-.iaid-hleft{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  min-width:0; /* évite overflow sur petits écrans */
-}
-
-.iaid-logo{
-  width:44px;
-  height:44px;
-  border-radius:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.32);
-  font-weight: 950;
-  letter-spacing: .5px;
-  flex: 0 0 auto;
-}
-
-.iaid-meta{
-  text-align:right;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.30);
-  padding: 10px 12px;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 800;
-  flex: 0 0 auto;
-}
-
-.iaid-meta div:first-child{
-  opacity: .95;
-}
-
-@media (max-width: 820px){
-  .iaid-hrow{
-    flex-direction:column;
-    align-items:stretch;
-  }
-  .iaid-meta{
-    text-align:left;
-    width:fit-content;
-  }
 }
 
 /* -----------------------------
