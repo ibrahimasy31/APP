@@ -485,47 +485,7 @@ button[kind="primary"] div{
   border-color: rgba(217,48,37,0.25);
 }
 
-/* =========================================================
-   ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
-   - force couleur texte + svg + icônes
-   - couvre stButton / stDownloadButton / kind="primary"
-========================================================= */
 
-.stButton > button,
-.stDownloadButton > button,
-button[kind="primary"],
-button[kind="secondary"]{
-  background: var(--blue) !important;
-  color: #FFFFFF !important;
-  border: none !important;
-  border-radius: 14px !important;
-  padding: 10px 16px !important;
-  font-weight: 900 !important;
-}
-
-/* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
-   et les icônes en svg -> on force TOUS les enfants */
-.stButton > button *,
-.stDownloadButton > button *,
-button[kind="primary"] *,
-button[kind="secondary"] *{
-  color: #FFFFFF !important;
-  fill: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
-
-/* hover */
-.stButton > button:hover,
-.stDownloadButton > button:hover{
-  background: var(--blue2) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
-}
-
-/* sécurité liens internes download */
-.stDownloadButton a{
-  text-decoration: none !important;
-}
 
 /* -----------------------------
    HEADER DG — LAYOUT (FIX)
