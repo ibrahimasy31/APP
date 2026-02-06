@@ -78,7 +78,6 @@ CFG = {
 }
 
 
-
 _tpl_name = CFG["dept_code"].lower()
 
 pio.templates[_tpl_name] = dict(
@@ -98,6 +97,106 @@ st.set_page_config(
 )
 
 
+# ==============================
+# ✅ RESUME IA (OPENAI) — OBSERVATIONS
+# ==============================
+from openai import OpenAI
+
+def _build_obs_payload(df_obs: pd.DataFrame, max_lines: int = 300) -> str:
+    """
+    Transforme les observations en texte court, lisible par un LLM.
+    On limite le nombre de lignes pour éviter les prompts énormes.
+    """
+    cols_needed = ["Classe", "Matière", "Écart", "Statut_auto", "Observations"]
+    for c in cols_needed:
+        if c not in df_obs.columns:
+            df_obs[c] = ""
+
+    d = df_obs.copy()
+    d["Observations"] = (
+        d["Observations"].astype(str)
+        .replace({"nan": "", "None": ""})
+        .fillna("")
+        .str.strip()
+    )
+    d = d[d["Observations"].str.len() > 0].copy()
+
+    # Prioriser : retards les plus critiques d'abord
+    if "Écart" in d.columns:
+        d["Écart"] = pd.to_numeric(d["Écart"], errors="coerce").fillna(0)
+        d = d.sort_values("Écart", ascending=True)
+
+    d = d.head(max_lines)
+
+    lines = []
+    for _, r in d.iterrows():
+        lines.append(
+            f"- Classe: {str(r.get('Classe','')).strip()} | "
+            f"Matière: {str(r.get('Matière','')).strip()} | "
+            f"Statut: {str(r.get('Statut_auto','')).strip()} | "
+            f"Écart(h): {r.get('Écart', 0)} | "
+            f"Obs: {str(r.get('Observations','')).strip()}"
+        )
+    return "\n".join(lines)
+
+
+def summarize_observations_with_openai(
+    df_filtered: pd.DataFrame,
+    mois_min: str,
+    mois_max: str,
+    cfg: dict,
+    model: str = "gpt-4.1-mini",
+    max_lines: int = 300
+) -> str:
+    """
+    Retourne un résumé DG-ready des observations.
+    """
+    api_key = st.secrets.get("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY manquant dans .streamlit/secrets.toml")
+
+    client = OpenAI(api_key=api_key)
+
+    # garder uniquement observations
+    df_obs = df_filtered.copy()
+    if "Observations" not in df_obs.columns:
+        df_obs["Observations"] = ""
+
+    payload = _build_obs_payload(df_obs, max_lines=max_lines)
+    if not payload.strip():
+        return "Aucune observation renseignée sur la période sélectionnée."
+
+    system = (
+        "Tu es un assistant de pilotage académique. "
+        "Tu dois produire un résumé professionnel, clair, actionnable, style Direction Générale. "
+        "Ne divulgue aucune donnée sensible (emails, infos perso)."
+    )
+
+    user = f"""
+Contexte:
+- Département: {cfg.get('department_long','')}
+- Période: {mois_min} → {mois_max}
+
+Données (observations consolidées):
+{payload}
+
+Tâche:
+1) Résumé exécutif (5–8 lignes)
+2) Points critiques récurrents (5–10 puces)
+3) Actions recommandées (3–7 actions)
+4) Synthèse par classe (1–2 lignes par classe max)
+Format: Markdown.
+""".strip()
+
+    # API Responses (recommandée)
+    resp = client.responses.create(
+        model=model,
+        input=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    )
+    return resp.output_text
 
 
 
@@ -1825,11 +1924,20 @@ with st.sidebar:
     # =========================================================
     # 6) EXPORT
     # =========================================================
+    # =========================================================
+    # 6) EXPORTS
+    # =========================================================
     sidebar_card("Exports")
 
-    export_prefix = st.text_input("Préfixe nom fichier export", value="Suivi_Classes")
+    st.caption("Nom des fichiers générés (Excel / PDF).")
+
+    export_prefix = st.text_input(
+        "Préfixe export",
+        value="Suivi_Classes",
+    )
 
     sidebar_card_end()
+
 
     # =========================================================
     # 7) RAPPEL DG/DGE (MENSUEL)
@@ -3014,13 +3122,22 @@ with tab_qualite:
 
 # ====== EXPORTS ======
 with tab_export:
-    
+
+    # === PATCH OPENAI DOWNLOAD ONLY ===
+    if "obs_ai_md" not in st.session_state:
+        st.session_state["obs_ai_md"] = None
+
     st.subheader("Exports (Excel consolidé + PDF officiel)")
+    st.caption("Les exports respectent les filtres actifs + la période sélectionnée.")
 
     col1, col2 = st.columns(2)
 
+    # =========================================================
+    # 1) EXCEL CONSOLIDÉ
+    # =========================================================
     with col1:
         st.write("### Export Excel consolidé")
+
         export_df = filtered[
             ["Classe","Semestre","Matière","Début prévu","Fin prévue","VHP"]
             + MOIS_COLS
@@ -3055,24 +3172,31 @@ with tab_export:
             "Synthese_Responsables": synth_resp,
         })
 
-
         st.download_button(
             "⬇️ Télécharger l’Excel consolidé",
             data=xbytes,
             file_name=f"{export_prefix}_consolide.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="dl_excel"
         )
 
+    # =========================================================
+    # 2) PDF + OPENAI
+    # =========================================================
     with col2:
+
+        # ---------- PDF PRINCIPAL ----------
         st.write("### Export PDF (rapport mensuel officiel)")
+
         pdf_title = st.text_input(
             "Titre du rapport PDF",
             value=f"Rapport mensuel — Suivi des enseignements ({CFG['dept_code']}) | {CFG['department_long']}",
-            key="pdf_title_export")
+            key="pdf_title_export"
+        )
 
         logo_bytes = logo.getvalue() if logo else None
 
-        if st.button("Générer le PDF", key="btn_generate_pdf"):
+        if st.button("Générer le PDF", key="btn_pdf_main"):
             pdf = build_pdf_report(
                 df=filtered[
                     ["Classe","Semestre","Matière","Début prévu","Fin prévue","VHP"]
@@ -3086,32 +3210,29 @@ with tab_export:
                 author_name=CFG["author_name"],
                 assistant_name=CFG["assistant_name"],
                 department=CFG["department_long"],
-                institution=CFG["institution"],)
+                institution=CFG["institution"],
+            )
 
             st.download_button(
                 "⬇️ Télécharger le PDF",
                 data=pdf,
                 file_name=f"{export_prefix}_rapport.pdf",
                 mime="application/pdf",
-                key="dl_pdf"
+                key="dl_pdf_main"
             )
-        st.write("### Export PDF (suivi des enseignements — Observations)")
+
+        st.divider()
+
+        # ---------- PDF OBSERVATIONS ----------
+        st.write("### Export PDF Observations")
 
         pdf_obs_title = st.text_input(
-            "Titre du rapport Observations",
-            value=f"Suivi des enseignements — Observations ({CFG['dept_code']}) | {CFG['department_long']}",
+            "Titre PDF Observations",
+            value=f"Suivi des enseignements — Observations ({CFG['dept_code']})",
             key="pdf_obs_title"
         )
 
-        max_rows_obs = st.number_input(
-            "Limite lignes par classe (Observations)",
-            min_value=0,
-            value=0,   # 0 = pas de limite
-            step=1,
-            help="0 = toutes les observations. Mets 18 si tu veux limiter."
-        )
-
-        if st.button("Générer le PDF Observations", key="btn_generate_pdf_obs"):
+        if st.button("Générer le PDF Observations", key="btn_pdf_obs"):
             pdf_obs = build_pdf_observations_report(
                 df=filtered[
                     ["Classe","Semestre","Type","Matière","Responsable","VHP","VHR","Écart","Taux","Statut_auto","Observations"]
@@ -3123,17 +3244,72 @@ with tab_export:
                 assistant_name=CFG["assistant_name"],
                 department=CFG["department_long"],
                 institution=CFG["institution"],
-                max_rows_per_class=int(max_rows_obs) if int(max_rows_obs) > 0 else 999999
             )
 
             st.download_button(
-                "⬇️ Télécharger le PDF Observations",
+                "⬇️ Télécharger PDF Observations",
                 data=pdf_obs,
-                file_name=f"{export_prefix}_suivi_observations.pdf",
+                file_name=f"{export_prefix}_observations.pdf",
                 mime="application/pdf",
                 key="dl_pdf_obs"
             )
 
+        st.divider()
+
+        # =========================================================
+        # OPENAI RESUME — TELECHARGEABLE (SEULE MODIF)
+        # =========================================================
+        st.subheader("🧠 Résumé IA — Observations")
+
+        if not st.session_state.get("is_admin", False):
+            st.info("🔒 Réservé Admin")
+        else:
+
+            max_lines_llm = st.slider(
+                "Nombre max observations envoyées à l'IA",
+                50, 800, 300, 50,
+                key="slider_ai"
+            )
+
+            if st.button("🧠 Générer résumé IA", key="btn_ai_obs"):
+                try:
+                    with st.spinner("Analyse IA en cours..."):
+                        st.session_state["obs_ai_md"] = summarize_observations_with_openai(
+                            df_filtered=filtered,
+                            mois_min=mois_min,
+                            mois_max=mois_max,
+                            cfg=CFG,
+                            model="gpt-4.1-mini",
+                            max_lines=int(max_lines_llm),
+                        )
+                except Exception as e:
+                    st.session_state["obs_ai_md"] = None
+                    st.error(f"Erreur IA : {e}")
+
+            # ===== AFFICHAGE + DOWNLOAD =====
+            if st.session_state["obs_ai_md"]:
+
+                st.markdown(st.session_state["obs_ai_md"])
+
+                md_bytes = st.session_state["obs_ai_md"].encode("utf-8")
+
+                st.download_button(
+                    "⬇️ Télécharger résumé IA (.md)",
+                    data=md_bytes,
+                    file_name=f"{export_prefix}_resume_IA_{mois_min}_{mois_max}.md",
+                    mime="text/markdown",
+                    key="dl_ai_md"
+                )
+
+                st.download_button(
+                    "⬇️ Télécharger résumé IA (.txt)",
+                    data=md_bytes,
+                    file_name=f"{export_prefix}_resume_IA_{mois_min}_{mois_max}.txt",
+                    mime="text/plain",
+                    key="dl_ai_txt"
+                )
+
+        
 
 
 
