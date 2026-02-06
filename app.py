@@ -740,95 +740,117 @@ button[kind="secondary"] *{
   text-decoration: none !important;
 }
 
-/* =========================
-   ✅ BANDEAU HAUT + LOGO TEXTE
-========================= */
-.iaid-banner{
-  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
-  border-radius: 22px;
-  padding: 24px 26px;
-  box-shadow: 0 18px 44px rgba(14,30,37,0.22);
-  margin: 0 0 14px 0;
+/* -----------------------------
+   HEADER DG (ANCIEN STYLE EXACT + LOGO TEXTE)
+------------------------------*/
+.iaid-header{
+  background: linear-gradient(100deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
+  color:#fff;
+  padding: 22px 24px;            /* ✅ un peu + haut */
+  border-radius: 22px;           /* ✅ comme l'ancien */
+  box-shadow: 0 18px 40px rgba(14,30,37,0.14);
   position: relative;
-  overflow: hidden;
+  overflow:hidden;
+  margin: 0 0 14px 0;
 }
 
-.iaid-banner-row{
+/* ✅ les 2 formes décoratives de l'ancienne version */
+.iaid-header:before{
+  content:"";
+  position:absolute;
+  top:-45%;
+  left:-25%;
+  width:70%;
+  height:220%;
+  transform: rotate(18deg);
+  background: rgba(255,255,255,0.10);
+}
+.iaid-header:after{
+  content:"";
+  position:absolute;
+  right:-120px;
+  top:-120px;
+  width:260px;
+  height:260px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+}
+
+.iaid-hrow{
   display:flex;
+  gap:14px;
   align-items:center;
   justify-content: space-between;
-  gap:16px;
+  position:relative; /* ✅ important (au-dessus des pseudo-elements) */
 }
 
-.iaid-left{
+.iaid-hleft{
   display:flex;
+  gap:14px;
   align-items:center;
-  gap:16px;
-  min-width:0;
+  min-width: 0;
 }
 
-/* ✅ LOGO TEXTE */
+/* ✅ LOGO TEXTE (au lieu de img) */
 .iaid-logo{
-  width:64px;
-  height:64px;
-  border-radius:18px;
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.30);
+  width:54px;
+  height:54px;
+  border-radius:16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
   display:flex;
   align-items:center;
   justify-content:center;
-  flex: 0 0 auto;
-}
+  overflow:hidden;
 
-.iaid-logo-text{
+  /* ✅ style texte */
   color:#FFFFFF !important;
-  font-size: 22px;
   font-weight: 950;
-  letter-spacing: .8px;
+  font-size: 18px;
+  letter-spacing: .6px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-.iaid-title{
-  color:#FFFFFF !important;
-  font-size: 22px;
+/* ✅ si jamais tu remets une image un jour, ça marche aussi */
+.iaid-logo img{ width:100%; height:100%; object-fit:cover; }
+
+.iaid-htitle{
+  font-size: 20px;
   font-weight: 950;
-  line-height: 1.1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+  letter-spacing:.3px;
 }
 
-.iaid-subtitle{
-  color: rgba(255,255,255,0.95) !important;
-  margin-top: 8px;
+.iaid-hsub{
+  margin-top:6px;
   font-size: 13px;
-  font-weight: 750;
-  line-height: 1.35;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+  opacity:.95;
+  line-height:1.35;
 }
 
 .iaid-meta{
   text-align:right;
-  color: rgba(255,255,255,0.95) !important;
-  font-size: 12px;
-  font-weight: 850;
+  font-size:12px;
+  opacity:.95;
+  font-weight: 800;
 }
 
 .iaid-badges{
-  margin-top: 14px;
+  margin-top: 12px;
   display:flex;
   gap: 8px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .iaid-badge{
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.32);
-  color:#FFFFFF !important;
-  padding: 7px 11px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
+  padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 850;
+  backdrop-filter: blur(6px);
 }
-
 
 </style>
 """,
@@ -2020,37 +2042,32 @@ with st.sidebar:
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 st.markdown(
-    f"""
-    <div class="iaid-banner">
-      <div class="iaid-banner-row">
-
-        <div class="iaid-left">
-          <div class="iaid-logo">
-            <div class="iaid-logo-text">{CFG["dept_code"]}</div>
-          </div>
-
-          <div>
-            <div class="iaid-title">{CFG["department_long"]}</div>
-            <div class="iaid-subtitle">{CFG["header_subtitle"]}</div>
-          </div>
-        </div>
-
-        <div class="iaid-meta">
-          <div>Dernière mise à jour</div>
-          <div style="font-size:13px;font-weight:950;">{now_str}</div>
-        </div>
-
-      </div>
-
-      <div class="iaid-badges">
-        <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
-        <div class="iaid-badge">KPIs • Alertes • Qualité</div>
-        <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
+f"""
+<div class="iaid-header">
+  <div class="iaid-hrow">
+    <div class="iaid-hleft">
+        <div class="iaid-logo">{DEPT_CODE}</div>
+      <div>
+        <div class="iaid-htitle">{DEPT_NAME}</div>
+        <div class="iaid-hsub">{DASHBOARD_LABEL}</div>
       </div>
     </div>
-    """,
-    unsafe_allow_html=True
+    <div class="iaid-meta">
+      <div>Dernière mise à jour</div>
+      <div style="font-size:13px;font-weight:950;">{now_str}</div>
+    </div>
+  </div>
+
+  <div class="iaid-badges">
+    <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+    <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+    <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
+  </div>
+</div>
+""",
+unsafe_allow_html=True
 )
+
 
 
 
