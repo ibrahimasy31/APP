@@ -43,21 +43,21 @@ import plotly.io as pio
 # =========================================================
 CFG = {
     # Identité
-    "dept_code": "IAID",
+    "dept_code": "DRS",
     "institution": "Institut Supérieur Informatique",
-    "department_long": "Département IA & Ingénierie des Données (IAID)",
+    "department_long": "Département Réseaux et Systèmes (DRS)",
 
     # UI (page + header + footer)
-    "page_title": "IAID — Suivi des classes (Dashboard)",
+    "page_title": "DRS — Suivi des classes (Dashboard)",
     "page_icon": "📊",
-    "header_title": "Département IA & Ingénierie des Données (IAID)",
+    "header_title": "Département Réseaux et Systèmes(DRS)",
     "header_subtitle": "Tableau de bord de pilotage mensuel — Suivi des enseignements par classe & par matière",
 
     # Signatures
-    "author_name": "Ibrahima SY",
-    "author_email": "ibsy@groupeisi.com",
-    "assistant_name": "Dieynaba Barry",
-    "assistant_email": "dbarry1@groupeisi.com",
+    "author_name": "Latyr Ndiaye",
+    "author_email": "landiaye@groupeisi.com",
+    "assistant_name": "Ndéye Ramatoulaye Diop",
+    "assistant_email": "nrdiop@groupeisi.com",
 
     # Assets
     "logo_path": "assets/logo_iaid.jpg",
@@ -74,7 +74,7 @@ CFG = {
     },
 
     # Email templates (prefix)
-    "email_prefix": "IAID",
+    "email_prefix": "DRS",
 }
 
 
