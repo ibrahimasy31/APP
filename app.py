@@ -1924,35 +1924,30 @@ with st.sidebar:
     sidebar_card_end()
 
 
-now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
-
-
 # =========================================================
-# ✅ HEADER CORRECT (Python séparé du HTML)
+# ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
-from pathlib import Path
-
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 p = Path(CFG["logo_path"])
 logo_html = ""
 
 if p.exists():
-    ext = p.suffix.lower().replace(".", "")
+    ext = p.suffix.lower().lstrip(".")
     if ext == "jpg":
         ext = "jpeg"
     b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
-    logo_html = f"""
-    <div class="iaid-logo">
-      <img src="data:image/{ext};base64,{b64}" />
-    </div>
-    """
+    logo_html = (
+        f'<div class="iaid-logo">'
+        f'  <img src="data:image/{ext};base64,{b64}" />'
+        f"</div>"
+    )
 else:
-    logo_html = f"""
-    <div class="iaid-logo" style="display:flex;align-items:center;justify-content:center;font-weight:950;">
-      {CFG["dept_code"]}
-    </div>
-    """
+    logo_html = (
+        '<div class="iaid-logo" style="display:flex;align-items:center;justify-content:center;font-weight:950;">'
+        f'{CFG["dept_code"]}'
+        "</div>"
+    )
 
 st.markdown(
     f"""
@@ -1979,7 +1974,7 @@ st.markdown(
       </div>
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
