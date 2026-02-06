@@ -931,13 +931,6 @@ button[kind="secondary"] *{
 .iaid-htitle{ font-size: 20px; font-weight: 950; letter-spacing:.3px; }
 .iaid-hsub{ margin-top:6px; font-size: 13px; opacity:.95; line-height:1.35; }
 
-.iaid-meta{
-  text-align:right;
-  font-size:12px;
-  opacity:.95;
-  font-weight: 800;
-  line-height: 1.2; /* ✅ évite d’augmenter la hauteur */
-}
 
 /* badges */
 .iaid-badges{
