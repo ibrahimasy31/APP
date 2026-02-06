@@ -544,18 +544,26 @@ button[kind="secondary"] *{
   min-width: 0;
 }
 
-.iaid-logo{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.30);
-  font-weight: 950;
-  flex: 0 0 auto;
+.iaid-meta{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  color: #FFFFFF !important;
+
+  padding: 0 !important;
+  border-radius: 0 !important;
+
+  text-align:right;
+  font-weight: 850;
 }
+.iaid-header .iaid-meta,
+.iaid-header .iaid-meta *{
+  background: transparent !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
 
 .iaid-meta{
   text-align:right;
