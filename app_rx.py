@@ -218,6 +218,12 @@ st.markdown(
   }
 }
 
+html, body, .stApp {
+  zoom: 1 !important;
+  font-size: 16px !important;
+}
+
+
 /* =========================================================
    IAID — THÈME BLEU EXÉCUTIF DG (FINAL)
    Lisibilité absolue • Tous navigateurs • Streamlit Cloud
