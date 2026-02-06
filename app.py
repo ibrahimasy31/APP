@@ -1929,54 +1929,23 @@ with st.sidebar:
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+st.markdown(
+    f"""
+    <div class="iaid-banner">
+      <div class="title">{CFG["department_long"]}</div>
+      <div class="subtitle">
+        {CFG["header_subtitle"]}
+      </div>
+      <div class="iaid-badges">
+        <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+        <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+        <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-p = Path(CFG["logo_path"])
-logo_html = ""
-
-if p.exists():
-    ext = p.suffix.lower().lstrip(".")
-    if ext == "jpg":
-        ext = "jpeg"
-    b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
-    logo_html = (
-        f'<div class="iaid-logo">'
-        f'  <img src="data:image/{ext};base64,{b64}" />'
-        f"</div>"
-    )
-else:
-    logo_html = (
-        '<div class="iaid-logo" style="display:flex;align-items:center;justify-content:center;font-weight:950;">'
-        f'{CFG["dept_code"]}'
-        "</div>"
-    )
-
-    st.markdown(
-        f"""
-        <div class="iaid-header">
-        <div class="iaid-hrow">
-            <div class="iaid-hleft">
-            {logo_html}
-            <div>
-                <div class="iaid-htitle">{CFG["header_title"]}</div>
-                <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
-            </div>
-            </div>
-
-            <div class="iaid-meta">
-            <div>Dernière mise à jour</div>
-            <div style="font-size:13px;font-weight:950;">{now_str}</div>
-            </div>
-        </div>
-
-        <div class="iaid-badges">
-            <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
-            <div class="iaid-badge">KPIs • Alertes • Qualité</div>
-            <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
-        </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 st.markdown(
