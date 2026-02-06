@@ -2039,6 +2039,9 @@ with st.sidebar:
 # =========================================================
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
+# =========================================================
+# ✅ HEADER (CLEAN) — basé sur CFG (aucune variable manquante)
+# =========================================================
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 st.markdown(
@@ -2046,10 +2049,10 @@ f"""
 <div class="iaid-header">
   <div class="iaid-hrow">
     <div class="iaid-hleft">
-        <div class="iaid-logo">{DEPT_CODE}</div>
+      <div class="iaid-logo">{CFG["dept_code"]}</div>
       <div>
-        <div class="iaid-htitle">{DEPT_NAME}</div>
-        <div class="iaid-hsub">{DASHBOARD_LABEL}</div>
+        <div class="iaid-htitle">{CFG["header_title"]}</div>
+        <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
       </div>
     </div>
     <div class="iaid-meta">
@@ -2067,8 +2070,6 @@ f"""
 """,
 unsafe_allow_html=True
 )
-
-
 
 
 st.markdown(
