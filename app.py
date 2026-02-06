@@ -2156,24 +2156,30 @@ with st.sidebar:
 # =========================================================
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
+# ================================
+# HEADER — PATCH CORRECT
+# ================================
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
-st.markdown(
-f"""
+header_html = f"""
 <div class="iaid-header">
   <div class="iaid-hrow">
     <div class="iaid-hleft">
+
       <div class="iaid-logo">{CFG["dept_code"]}</div>
+
       <div>
         <div class="iaid-htitle">{CFG["header_title"]}</div>
         <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
       </div>
+
     </div>
 
     <div class="iaid-meta">
       <div>Dernière mise à jour</div>
       <div style="font-size:13px;font-weight:950;">{now_str}</div>
     </div>
+
   </div>
 
   <div class="iaid-badges">
@@ -2181,10 +2187,11 @@ f"""
     <div class="iaid-badge">KPIs • Alertes • Qualité</div>
     <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
   </div>
+
 </div>
-""",
-unsafe_allow_html=True
-)
+"""
+
+st.markdown(header_html, unsafe_allow_html=True)
 
 
 
