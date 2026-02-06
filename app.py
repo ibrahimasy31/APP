@@ -3123,6 +3123,10 @@ with tab_qualite:
 # ====== EXPORTS ======
 with tab_export:
 
+    # === PATCH OPENAI DOWNLOAD ONLY ===
+    if "obs_ai_md" not in st.session_state:
+        st.session_state["obs_ai_md"] = None
+
     st.subheader("Exports (Excel consolidé + PDF officiel)")
     st.caption("Les exports respectent les filtres actifs + la période sélectionnée.")
 
@@ -3173,14 +3177,15 @@ with tab_export:
             data=xbytes,
             file_name=f"{export_prefix}_consolide.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="dl_excel"
         )
 
-        st.caption("Feuilles : Consolidé + Synthèse Classes + Synthèse Responsables")
-
     # =========================================================
-    # 2) PDFS
+    # 2) PDF + OPENAI
     # =========================================================
     with col2:
+
+        # ---------- PDF PRINCIPAL ----------
         st.write("### Export PDF (rapport mensuel officiel)")
 
         pdf_title = st.text_input(
@@ -3191,7 +3196,7 @@ with tab_export:
 
         logo_bytes = logo.getvalue() if logo else None
 
-        if st.button("Générer le PDF", key="btn_generate_pdf"):
+        if st.button("Générer le PDF", key="btn_pdf_main"):
             pdf = build_pdf_report(
                 df=filtered[
                     ["Classe","Semestre","Matière","Début prévu","Fin prévue","VHP"]
@@ -3213,25 +3218,21 @@ with tab_export:
                 data=pdf,
                 file_name=f"{export_prefix}_rapport.pdf",
                 mime="application/pdf",
-                key="dl_pdf"
+                key="dl_pdf_main"
             )
 
         st.divider()
 
-        # =========================================================
-        # PDF OBSERVATIONS (SANS LIMITE)
-        # =========================================================
-        st.write("### Export PDF (suivi des enseignements — Observations)")
+        # ---------- PDF OBSERVATIONS ----------
+        st.write("### Export PDF Observations")
 
         pdf_obs_title = st.text_input(
-            "Titre du rapport Observations",
-            value=f"Suivi des enseignements — Observations ({CFG['dept_code']}) | {CFG['department_long']}",
+            "Titre PDF Observations",
+            value=f"Suivi des enseignements — Observations ({CFG['dept_code']})",
             key="pdf_obs_title"
         )
 
-        # ✅ SUPPRIMÉ : Limite lignes par classe (Observations)
-
-        if st.button("Générer le PDF Observations", key="btn_generate_pdf_obs"):
+        if st.button("Générer le PDF Observations", key="btn_pdf_obs"):
             pdf_obs = build_pdf_observations_report(
                 df=filtered[
                     ["Classe","Semestre","Type","Matière","Responsable","VHP","VHR","Écart","Taux","Statut_auto","Observations"]
@@ -3243,42 +3244,70 @@ with tab_export:
                 assistant_name=CFG["assistant_name"],
                 department=CFG["department_long"],
                 institution=CFG["institution"],
-                # ✅ on ne passe plus max_rows_per_class => pas de limite via UI
             )
 
             st.download_button(
-                "⬇️ Télécharger le PDF Observations",
+                "⬇️ Télécharger PDF Observations",
                 data=pdf_obs,
-                file_name=f"{export_prefix}_suivi_observations.pdf",
+                file_name=f"{export_prefix}_observations.pdf",
                 mime="application/pdf",
                 key="dl_pdf_obs"
             )
 
-            st.divider()
-            st.subheader("🧠 Résumé IA — Observations (OpenAI)")
+        st.divider()
 
-            if not st.session_state.get("is_admin", False):
-                st.info("🔒 Réservé Admin (PIN).")
-            else:
-                max_lines_llm = st.slider(
-                    "Nombre max d'observations envoyées à l'IA",
-                    50, 800, 300, 50
+        # =========================================================
+        # OPENAI RESUME — TELECHARGEABLE (SEULE MODIF)
+        # =========================================================
+        st.subheader("🧠 Résumé IA — Observations")
+
+        if not st.session_state.get("is_admin", False):
+            st.info("🔒 Réservé Admin")
+        else:
+
+            max_lines_llm = st.slider(
+                "Nombre max observations envoyées à l'IA",
+                50, 800, 300, 50,
+                key="slider_ai"
+            )
+
+            if st.button("🧠 Générer résumé IA", key="btn_ai_obs"):
+                try:
+                    with st.spinner("Analyse IA en cours..."):
+                        st.session_state["obs_ai_md"] = summarize_observations_with_openai(
+                            df_filtered=filtered,
+                            mois_min=mois_min,
+                            mois_max=mois_max,
+                            cfg=CFG,
+                            model="gpt-4.1-mini",
+                            max_lines=int(max_lines_llm),
+                        )
+                except Exception as e:
+                    st.session_state["obs_ai_md"] = None
+                    st.error(f"Erreur IA : {e}")
+
+            # ===== AFFICHAGE + DOWNLOAD =====
+            if st.session_state["obs_ai_md"]:
+
+                st.markdown(st.session_state["obs_ai_md"])
+
+                md_bytes = st.session_state["obs_ai_md"].encode("utf-8")
+
+                st.download_button(
+                    "⬇️ Télécharger résumé IA (.md)",
+                    data=md_bytes,
+                    file_name=f"{export_prefix}_resume_IA_{mois_min}_{mois_max}.md",
+                    mime="text/markdown",
+                    key="dl_ai_md"
                 )
 
-                if st.button("🧠 Générer le résumé IA (Observations)"):
-                    try:
-                        with st.spinner("Génération du résumé IA..."):
-                            summary_md = summarize_observations_with_openai(
-                                df_filtered=filtered,
-                                mois_min=mois_min,
-                                mois_max=mois_max,
-                                cfg=CFG,
-                                model="gpt-4.1-mini",
-                                max_lines=int(max_lines_llm),
-                            )
-                        st.markdown(summary_md)
-                    except Exception as e:
-                        st.error(f"Erreur IA: {e}")
+                st.download_button(
+                    "⬇️ Télécharger résumé IA (.txt)",
+                    data=md_bytes,
+                    file_name=f"{export_prefix}_resume_IA_{mois_min}_{mois_max}.txt",
+                    mime="text/plain",
+                    key="dl_ai_txt"
+                )
 
         
 
