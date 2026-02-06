@@ -1924,11 +1924,20 @@ with st.sidebar:
     # =========================================================
     # 6) EXPORT
     # =========================================================
+    # =========================================================
+    # 6) EXPORTS
+    # =========================================================
     sidebar_card("Exports")
 
-    export_prefix = st.text_input("Préfixe nom fichier export", value="Suivi_Classes")
+    st.caption("Nom des fichiers générés (Excel / PDF).")
+
+    export_prefix = st.text_input(
+        "Préfixe export",
+        value="Suivi_Classes",
+    )
 
     sidebar_card_end()
+
 
     # =========================================================
     # 7) RAPPEL DG/DGE (MENSUEL)
@@ -3113,13 +3122,18 @@ with tab_qualite:
 
 # ====== EXPORTS ======
 with tab_export:
-    
+
     st.subheader("Exports (Excel consolidé + PDF officiel)")
+    st.caption("Les exports respectent les filtres actifs + la période sélectionnée.")
 
     col1, col2 = st.columns(2)
 
+    # =========================================================
+    # 1) EXCEL CONSOLIDÉ
+    # =========================================================
     with col1:
         st.write("### Export Excel consolidé")
+
         export_df = filtered[
             ["Classe","Semestre","Matière","Début prévu","Fin prévue","VHP"]
             + MOIS_COLS
@@ -3154,7 +3168,6 @@ with tab_export:
             "Synthese_Responsables": synth_resp,
         })
 
-
         st.download_button(
             "⬇️ Télécharger l’Excel consolidé",
             data=xbytes,
@@ -3162,12 +3175,19 @@ with tab_export:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
+        st.caption("Feuilles : Consolidé + Synthèse Classes + Synthèse Responsables")
+
+    # =========================================================
+    # 2) PDFS
+    # =========================================================
     with col2:
         st.write("### Export PDF (rapport mensuel officiel)")
+
         pdf_title = st.text_input(
             "Titre du rapport PDF",
             value=f"Rapport mensuel — Suivi des enseignements ({CFG['dept_code']}) | {CFG['department_long']}",
-            key="pdf_title_export")
+            key="pdf_title_export"
+        )
 
         logo_bytes = logo.getvalue() if logo else None
 
@@ -3185,7 +3205,8 @@ with tab_export:
                 author_name=CFG["author_name"],
                 assistant_name=CFG["assistant_name"],
                 department=CFG["department_long"],
-                institution=CFG["institution"],)
+                institution=CFG["institution"],
+            )
 
             st.download_button(
                 "⬇️ Télécharger le PDF",
@@ -3194,6 +3215,12 @@ with tab_export:
                 mime="application/pdf",
                 key="dl_pdf"
             )
+
+        st.divider()
+
+        # =========================================================
+        # PDF OBSERVATIONS (SANS LIMITE)
+        # =========================================================
         st.write("### Export PDF (suivi des enseignements — Observations)")
 
         pdf_obs_title = st.text_input(
@@ -3202,13 +3229,7 @@ with tab_export:
             key="pdf_obs_title"
         )
 
-        max_rows_obs = st.number_input(
-            "Limite lignes par classe (Observations)",
-            min_value=0,
-            value=0,   # 0 = pas de limite
-            step=1,
-            help="0 = toutes les observations. Mets 18 si tu veux limiter."
-        )
+        # ✅ SUPPRIMÉ : Limite lignes par classe (Observations)
 
         if st.button("Générer le PDF Observations", key="btn_generate_pdf_obs"):
             pdf_obs = build_pdf_observations_report(
@@ -3222,7 +3243,7 @@ with tab_export:
                 assistant_name=CFG["assistant_name"],
                 department=CFG["department_long"],
                 institution=CFG["institution"],
-                max_rows_per_class=int(max_rows_obs) if int(max_rows_obs) > 0 else 999999
+                # ✅ on ne passe plus max_rows_per_class => pas de limite via UI
             )
 
             st.download_button(
@@ -3239,7 +3260,10 @@ with tab_export:
             if not st.session_state.get("is_admin", False):
                 st.info("🔒 Réservé Admin (PIN).")
             else:
-                max_lines_llm = st.slider("Nombre max d'observations envoyées à l'IA", 50, 800, 300, 50)
+                max_lines_llm = st.slider(
+                    "Nombre max d'observations envoyées à l'IA",
+                    50, 800, 300, 50
+                )
 
                 if st.button("🧠 Générer le résumé IA (Observations)"):
                     try:
