@@ -78,6 +78,7 @@ CFG = {
 }
 
 
+
 _tpl_name = CFG["dept_code"].lower()
 
 pio.templates[_tpl_name] = dict(
@@ -1368,8 +1369,6 @@ def build_pdf_report(
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
 
     return out.getvalue()
-
-
 def build_pdf_observations_report(
     df: pd.DataFrame,
     title: str,
@@ -1386,6 +1385,50 @@ def build_pdf_observations_report(
     H2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=12, spaceAfter=6)
     P  = ParagraphStyle("P", parent=styles["BodyText"], fontSize=9, leading=12)
     Small = ParagraphStyle("Small", parent=styles["BodyText"], fontSize=8, leading=10)
+
+    # =========================================================
+    # ✅ WRAP PDF (Observations) — Anti chevauchement + texte long
+    # =========================================================
+    from reportlab.lib.enums import TA_LEFT
+
+    CELL = ParagraphStyle(
+        "CELL_OBS",
+        parent=styles["BodyText"],
+        fontSize=8.2,
+        leading=10.5,
+        spaceBefore=0,
+        spaceAfter=0,
+        alignment=TA_LEFT,
+        wordWrap="CJK",   # wrap robuste (mots longs)
+    )
+
+    HEAD = ParagraphStyle(
+        "HEAD_OBS",
+        parent=styles["BodyText"],
+        fontSize=8.4,
+        leading=10,
+        spaceBefore=0,
+        spaceAfter=0,
+        alignment=TA_LEFT,
+        textColor=colors.white,
+    )
+
+    def _esc(x) -> str:
+        s = "" if x is None else str(x)
+        return (
+            s.replace("&", "&amp;")
+             .replace("<", "&lt;")
+             .replace(">", "&gt;")
+        )
+
+    def Pcell(x, allow_br: bool = True) -> Paragraph:
+        """
+        Cellule PDF WRAP : support retours ligne via <br/>.
+        """
+        s = _esc(x).strip()
+        if allow_br:
+            s = s.replace("\n", "<br/>")
+        return Paragraph(s if s else "—", CELL)
 
     out = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -1408,7 +1451,7 @@ def build_pdf_observations_report(
         d["Observations"].astype(str)
         .replace({"nan": "", "None": ""})
         .fillna("")
-        .str.replace("\n", " ", regex=False)
+        .str.replace("\r", "", regex=False)  # ✅ garder \n (retours ligne)
         .str.strip()
     )
 
@@ -1517,9 +1560,14 @@ def build_pdf_observations_report(
     # -----------------------------
     # Synthèse (KPIs)
     # -----------------------------
+    if "Classe" not in d.columns:
+        d["Classe"] = "—"
+    if "Responsable" not in d.columns:
+        d["Responsable"] = "—"
+
     total_obs = len(d)
-    nb_classes = int(d["Classe"].nunique()) if "Classe" in d.columns else 0
-    nb_resp = int(d["Responsable"].nunique()) if "Responsable" in d.columns else 0
+    nb_classes = int(d["Classe"].nunique())
+    nb_resp = int(d["Responsable"].nunique())
 
     kpi_table = Table(
         [
@@ -1543,10 +1591,6 @@ def build_pdf_observations_report(
     # -----------------------------
     # Détail par classe
     # -----------------------------
-    if "Classe" not in d.columns:
-        d["Classe"] = "—"
-
-    # Tri utile : classe puis écart (retards) si existe
     sort_cols = ["Classe"]
     if "Écart" in d.columns:
         sort_cols += ["Écart"]
@@ -1555,38 +1599,58 @@ def build_pdf_observations_report(
     for classe, g in d.groupby("Classe"):
         story.append(Paragraph(f"Classe : {classe}", H2))
 
-        # limite optionnelle
         gg = g.copy()
         if max_rows_per_class and max_rows_per_class > 0:
             gg = gg.head(max_rows_per_class)
 
-        rows = [["Sem", "Type", "Matière", "Responsable", "Observation"]]
+        # ✅ Table WRAP : Paragraph dans toutes les cellules texte
+        rows = [[
+            Paragraph("<b>Sem</b>", HEAD),
+            Paragraph("<b>Type</b>", HEAD),
+            Paragraph("<b>Matière</b>", HEAD),
+            Paragraph("<b>Responsable</b>", HEAD),
+            Paragraph("<b>Observation</b>", HEAD),
+        ]]
+
         for _, r in gg.iterrows():
-            sem = str(r.get("Semestre", ""))[:10]
-            typ = str(r.get("Type", ""))[:12]
-            mat = str(r.get("Matière", ""))[:40]
-            resp = str(r.get("Responsable", ""))[:24]
-            obs = str(r.get("Observations", ""))[:220]  # limite pour rester lisible
+            sem  = r.get("Semestre", "")
+            typ  = r.get("Type", "")
+            mat  = r.get("Matière", "")
+            resp = r.get("Responsable", "")
+            obs  = r.get("Observations", "")  # ✅ PAS TRONQUÉ
 
-            rows.append([sem, typ, mat, resp, obs])
+            rows.append([
+                Pcell(sem,  allow_br=False),
+                Pcell(typ,  allow_br=False),
+                Pcell(mat,  allow_br=True),
+                Pcell(resp, allow_br=True),
+                Pcell(obs,  allow_br=True),
+            ])
 
-        t = Table(rows, colWidths=[1.0*cm, 1.2*cm, 4.3*cm, 3.0*cm, 6.4*cm])
+        t = Table(
+            rows,
+            colWidths=[1.0*cm, 1.5*cm, 4.0*cm, 3.1*cm, 6.3*cm],  # total ~ 15.9cm
+            repeatRows=1,
+            splitByRow=1,  # ✅ découpage multi-pages
+        )
+
         t.setStyle(TableStyle([
-            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#F0F3F8")),
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#0B3D91")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
             ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+
             ("FONTSIZE", (0,0), (-1,-1), 8),
-            ("GRID", (0,0), (-1,-1), 0.25, colors.lightgrey),
+            ("GRID", (0,0), (-1,-1), 0.25, colors.HexColor("#D7DEE8")),
             ("VALIGN", (0,0), (-1,-1), "TOP"),
+
             ("LEFTPADDING", (0,0), (-1,-1), 6),
             ("RIGHTPADDING", (0,0), (-1,-1), 6),
             ("TOPPADDING", (0,0), (-1,-1), 4),
             ("BOTTOMPADDING", (0,0), (-1,-1), 4),
         ]))
+
         story.append(t)
         story.append(Spacer(1, 10))
-
-        # si beaucoup de classes → page break pour lisibilité
-        story.append(Spacer(1, 4))
 
     def _footer(canvas, doc_):
         canvas.saveState()
