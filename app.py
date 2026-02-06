@@ -470,38 +470,7 @@ span[data-baseweb="tag"]{
   border-radius: 10px;
 }
 
-/* -----------------------------
-   HEADER DG
-------------------------------*/
-.iaid-header{
-  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
-  color: #FFFFFF !important;
-  padding: 18px 22px;
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
-  margin-bottom: 16px;
-}
-.iaid-header *{
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
-}
-.iaid-htitle{ font-size: 20px; font-weight: 950; }
-.iaid-hsub{ font-size: 13px; opacity: .95; margin-top: 4px; }
 
-.iaid-badges{
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.iaid-badge{
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.32);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 850;
-}
 
 
 /* -----------------------------
