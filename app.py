@@ -37,28 +37,63 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
 import plotly.io as pio
-import plotly.io as pio
 
-pio.templates["iaid"] = dict(
-    layout=dict(
-        colorway=[
-            "#0B3D91",   # bleu IAID principal
-            "#1F6FEB",
-            "#5AA2FF",
-            "#8EC5FF",
-            "#BBDFFF"
-        ]
-    )
+# =========================================================
+# CONFIG DÉPARTEMENT (SEUL ENDROIT À MODIFIER PAR DÉPARTEMENT)
+# =========================================================
+CFG = {
+    # Identité
+    "dept_code": "IAID",
+    "institution": "Institut Supérieur Informatique",
+    "department_long": "Département IA & Ingénierie des Données (IAID)",
+
+    # UI (page + header + footer)
+    "page_title": "IAID — Suivi des classes (Dashboard)",
+    "page_icon": "📊",
+    "header_title": "Département IA & Ingénierie des Données (IAID)",
+    "header_subtitle": "Tableau de bord de pilotage mensuel — Suivi des enseignements par classe & par matière",
+
+    # Signatures
+    "author_name": "Ibrahima SY",
+    "author_email": "ibsy@groupeisi.com",
+    "assistant_name": "Dieynaba Barry",
+    "assistant_email": "dbarry1@groupeisi.com",
+
+    # Assets
+    "logo_path": "assets/logo_iaid.jpg",
+
+    # Plotly palette
+    "plotly_colorway": ["#0B3D91", "#1F6FEB", "#5AA2FF", "#8EC5FF", "#BBDFFF"],
+
+    # Secrets keys (varient selon département)
+    "secrets": {
+        "excel_url": "IAID_EXCEL_URL",
+        "dg_emails": "DG_EMAILS",
+        "dashboard_url": "DASHBOARD_URL",
+        "admin_pin": "ADMIN_PIN",
+    },
+
+    # Email templates (prefix)
+    "email_prefix": "IAID",
+}
+
+
+_tpl_name = CFG["dept_code"].lower()
+
+pio.templates[_tpl_name] = dict(
+    layout=dict(colorway=CFG["plotly_colorway"])
 )
 
-pio.templates.default = "plotly_white+iaid"
+pio.templates.default = "plotly_white+" + _tpl_name
+
+
 
 
 
 st.set_page_config(
-    page_title="IAID — Suivi des classes (Dashboard)",
+    page_title=CFG["page_title"],
     layout="wide",
-    page_icon="📊",
+    page_icon=CFG["page_icon"],
 )
 
 
@@ -662,6 +697,49 @@ button[kind="primary"] div{
   border-color: rgba(217,48,37,0.25);
 }
 
+/* =========================================================
+   ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
+   - force couleur texte + svg + icônes
+   - couvre stButton / stDownloadButton / kind="primary"
+========================================================= */
+
+.stButton > button,
+.stDownloadButton > button,
+button[kind="primary"],
+button[kind="secondary"]{
+  background: var(--blue) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 10px 16px !important;
+  font-weight: 900 !important;
+}
+
+/* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
+   et les icônes en svg -> on force TOUS les enfants */
+.stButton > button *,
+.stDownloadButton > button *,
+button[kind="primary"] *,
+button[kind="secondary"] *{
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* hover */
+.stButton > button:hover,
+.stDownloadButton > button:hover{
+  background: var(--blue2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+}
+
+/* sécurité liens internes download */
+.stDownloadButton a{
+  text-decoration: none !important;
+}
+
+
 </style>
 """,
 unsafe_allow_html=True
@@ -1035,7 +1113,7 @@ def build_prof_email_html(
                   font-family:Arial,Helvetica,sans-serif;color:#0F172A;">
 
         <div style="padding:22px 26px;background:linear-gradient(90deg,#0B3D91,#1F6FEB);color:#FFFFFF;">
-          <div style="font-size:18px;font-weight:900;">IAID — Notification Enseignant</div>
+          <div style="font-size:18px;font-weight:900;">{CFG["dept_code"]} — Notification Enseignant</div>
           <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
             {lot_label} • Période : {mois_min} → {mois_max}
           </div>
@@ -1079,13 +1157,13 @@ def build_prof_email_html(
           </div>
 
           <p style="font-size:13px;color:#475569;">
-            Message généré automatiquement — pilotage académique IAID.
+            Message généré automatiquement — {CFG["department_long"]}.
           </p>
         </div>
 
         <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
                     font-size:12px;color:#475569;text-align:center;">
-          Département IA &amp; Ingénierie des Données (IAID)
+                    {CFG["department_long"]}
         </div>
 
       </div>
@@ -1246,10 +1324,10 @@ def build_pdf_report(
     mois_couverts: List[str],
     thresholds: dict,
     logo_bytes: Optional[bytes] = None,
-    author_name: str = "Ibrahima SY",
-    assistant_name: str = "Dieynaba Barry",
-    department: str = "Département IA & Ingénierie des Données (IAID)",
-    institution: str = "Institut Supérieur Informatique",
+    author_name: str = "",
+    assistant_name: str = "",
+    department: str = "",
+    institution: str = "",
 ) -> bytes:
     styles = getSampleStyleSheet()
     H1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=16, spaceAfter=10)
@@ -1298,7 +1376,7 @@ def build_pdf_report(
                 f"""
                 <b>Date :</b> {date_gen}<br/>
                 <b>Période :</b> {periode_str}<br/>
-                <b>Référence :</b> IAID-SUIVI-{now_dt.strftime("%Y%m")}
+                <b>Référence :</b> {department.split('(')[-1].replace(')','').strip() or 'DEPT'}-SUIVI-{now_dt.strftime("%Y%m")}
                 """,
                 P
             )
@@ -1462,7 +1540,7 @@ def sidebar_card_end():
 with st.sidebar:
     from pathlib import Path
 
-    LOGO_JPG = Path("assets/logo_iaid.jpg")
+    LOGO_JPG = Path(CFG["logo_path"])
 
     if LOGO_JPG.exists():
         st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
@@ -1470,13 +1548,14 @@ with st.sidebar:
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown(
-            """
+            f"""
             <div class="sidebar-logo-wrap" style="font-weight:950;color:#0B3D91;font-size:18px;">
-            IAID
+            {CFG["dept_code"]}
             </div>
             """,
             unsafe_allow_html=True
         )
+
 
     st.divider()
 
@@ -1516,7 +1595,7 @@ with st.sidebar:
 
     if import_mode == "URL (auto)":
         st.caption("Recommandé Streamlit Cloud : lien direct vers un fichier .xlsx")
-        default_url = st.secrets.get("IAID_EXCEL_URL", "")
+        default_url = st.secrets.get(CFG["secrets"]["excel_url"], "")
         url = st.text_input("URL du fichier Excel (.xlsx)", value=default_url)
 
         if url.strip():
@@ -1618,8 +1697,8 @@ with st.sidebar:
     # =========================================================
     sidebar_card("📩 Rappel DG/DGE (mensuel)")
 
-    dashboard_url = st.secrets.get("DASHBOARD_URL", "https://rapportdeptiaid.streamlit.app/")
-    recips_raw = st.secrets.get("DG_EMAILS", "")
+    dashboard_url = st.secrets.get(CFG["secrets"]["dashboard_url"], "")
+    recips_raw = st.secrets.get(CFG["secrets"]["dg_emails"], "")
     recipients = [x.strip() for x in recips_raw.split(",") if x.strip()]
 
     today = dt.date.today()
@@ -1630,24 +1709,22 @@ with st.sidebar:
 
     # --- Sécurité admin ---
     pin = st.text_input("Code admin (PIN)", type="password").strip()
-    admin_pin = str(st.secrets.get("ADMIN_PIN", "")).strip()
-
+    admin_pin = str(st.secrets.get(CFG["secrets"]["admin_pin"], "")).strip()
     is_admin = (pin != "" and admin_pin != "" and pin == admin_pin)
 
     # rendre dispo partout (onglets)
     st.session_state["is_admin"] = is_admin
 
 
-
-    subject = f"IAID — Rappel mensuel de pilotage des enseignements ({today.strftime('%m/%Y')})"
+    subject = f"{CFG['email_prefix']} — Rappel mensuel de pilotage des enseignements ({today.strftime('%m/%Y')})"
     body_text = f"""
-    Département IA & Ingénierie des Données (IAID)
+    {CFG["department_long"]}
     Notification mensuelle — Pilotage des enseignements • {today.strftime('%m/%Y')}
     Mise à jour : {dt.datetime.now().strftime('%d/%m/%Y %H:%M')}
 
     Madame la Directrice,
 
-    Dans le cadre du suivi mensuel du pilotage académique, nous vous transmettons l’accès au Dashboard IAID, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
+    Dans le cadre du suivi mensuel du pilotage académique, nous vous transmettons l’accès au Dashboard {CFG["dept_code"]}, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
 
     Ce tableau de bord permet notamment :
     - Le suivi de l’état d’avancement des enseignements par classe et par matière
@@ -1656,7 +1733,7 @@ with st.sidebar:
     - L’accès à des indicateurs synthétiques facilitant le pilotage décisionnel
     - La génération de rapports consolidés (PDF officiels et exports Excel)
 
-    Ouvrir le Dashboard IAID →
+    Ouvrir le Dashboard {CFG["dept_code"]} →
     {dashboard_url}
 
     📌 Informations clés
@@ -1695,7 +1772,7 @@ with st.sidebar:
                 color:#FFFFFF;
             ">
             <div style="font-size:18px;font-weight:900;">
-                Département IA &amp; Ingénierie des Données (IAID)
+                {CFG["department_long"]}
             </div>
             <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
                 Notification mensuelle — Pilotage des enseignements • {today.strftime('%m/%Y')}
@@ -1715,7 +1792,7 @@ with st.sidebar:
 
             <p>
                 Dans le cadre du <b>suivi mensuel du pilotage académique</b>, nous vous transmettons l’accès au
-                <b>Dashboard IAID</b>, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
+                <b>Dashboard {CFG["dept_code"]}</b>, plateforme institutionnelle permettant un suivi consolidé et continu des activités pédagogiques du département.
             </p>
 
             <p style="margin:0;">
@@ -1743,7 +1820,7 @@ with st.sidebar:
                 font-size:14px;
                 box-shadow:0 10px 24px rgba(14,30,37,0.25);
                 ">
-                Ouvrir le Dashboard IAID →
+                Ouvrir le Dashboard {CFG["dept_code"]} →
                 </a>
             </div>
 
@@ -1779,7 +1856,7 @@ with st.sidebar:
                 color:#475569;
                 text-align:center;
             ">
-            Message automatique — Département IA &amp; Ingénierie des Données (IAID)
+            Message automatique — {CFG["department_long"]}
             </div>
 
         </div>
@@ -1849,39 +1926,69 @@ with st.sidebar:
 
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
+
+# =========================================================
+# ✅ HEADER CORRECT (Python séparé du HTML)
+# =========================================================
+from pathlib import Path
+
+now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+p = Path(CFG["logo_path"])
+logo_html = ""
+
+if p.exists():
+    ext = p.suffix.lower().replace(".", "")
+    if ext == "jpg":
+        ext = "jpeg"
+    b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
+    logo_html = f"""
+    <div class="iaid-logo">
+      <img src="data:image/{ext};base64,{b64}" />
+    </div>
+    """
+else:
+    logo_html = f"""
+    <div class="iaid-logo" style="display:flex;align-items:center;justify-content:center;font-weight:950;">
+      {CFG["dept_code"]}
+    </div>
+    """
+
 st.markdown(
-f"""
-<div class="iaid-header">
-  <div class="iaid-hrow">
-    <div class="iaid-hleft">
-        <div class="iaid-logo">IAID</div>
-      <div>
-        <div class="iaid-htitle">Département IA &amp; Ingénierie des Données (IAID)</div>
-        <div class="iaid-hsub">Tableau de bord de pilotage mensuel — Suivi des enseignements par classe &amp; par matière</div>
+    f"""
+    <div class="iaid-header">
+      <div class="iaid-hrow">
+        <div class="iaid-hleft">
+          {logo_html}
+          <div>
+            <div class="iaid-htitle">{CFG["header_title"]}</div>
+            <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
+          </div>
+        </div>
+
+        <div class="iaid-meta">
+          <div>Dernière mise à jour</div>
+          <div style="font-size:13px;font-weight:950;">{now_str}</div>
+        </div>
+      </div>
+
+      <div class="iaid-badges">
+        <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
+        <div class="iaid-badge">KPIs • Alertes • Qualité</div>
+        <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
       </div>
     </div>
-    <div class="iaid-meta">
-      <div>Dernière mise à jour</div>
-      <div style="font-size:13px;font-weight:950;">{now_str}</div>
-    </div>
-  </div>
-
-  <div class="iaid-badges">
-    <div class="iaid-badge">Excel multi-feuilles → Consolidation automatique</div>
-    <div class="iaid-badge">KPIs • Alertes • Qualité</div>
-    <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
-  </div>
-</div>
-""",
-unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True
 )
 
+
 st.markdown(
-"""
+f"""
 <div class="footer-signature">
-  <strong>Ibrahima SY</strong> — Chef de Département • ✉️ ibsy@groupeisi.com
+  <strong>{CFG["author_name"]}</strong> — Chef de Département • ✉️ {CFG["author_email"]}
   <br/>
-  <strong>Assistante :</strong> Dieynaba Barry • ✉️ dbarry1@groupeisi.com
+  <strong>Assistante :</strong> {CFG["assistant_name"]} • ✉️ {CFG["assistant_email"]}
 </div>
 """,
 unsafe_allow_html=True
@@ -2705,13 +2812,13 @@ with tab_alertes:
                         )
 
                     body_text_prof = (
-                        f"IAID — Notification de suivi des enseignements\n"
+                        f"{CFG['dept_code']} — Notification de suivi des enseignements\n"
                         f"Période : {mois_min} → {mois_max}\n\n"
                         f"Bonjour {prof},\n\n"
                         f"Lot : {lot}\n"
                         f"Éléments concernés : {len(gprof)}\n\n"
                         + "\n".join(lignes_txt)
-                        + "\n\nDépartement IA & Ingénierie des Données (IAID)\n"
+                        + f"\n\n{CFG['department_long']}\n"
                     )
 
                     # ✅ HTML : tu as déjà build_prof_email_html global, on l’utilise ici
@@ -2724,8 +2831,7 @@ with tab_alertes:
                         gprof=gprof
                     )
 
-                    subject_prof = f"IAID — Notification ({mois_min}→{mois_max}) : {lot.split(' ',1)[1]} — {len(gprof)} élément(s)"
-
+                    subject_prof = f"{CFG['dept_code']} — Notification ({mois_min}→{mois_max}) : {lot.split(' ',1)[1]} — {len(gprof)} élément(s)"
                     try:
                         send_email_reminder(
                             smtp_host=st.secrets["SMTP_HOST"],
@@ -2846,7 +2952,7 @@ with tab_export:
         st.write("### Export PDF (rapport mensuel officiel)")
         pdf_title = st.text_input(
             "Titre du rapport PDF",
-            value="Rapport mensuel — Suivi des enseignements (IAID) | Département IA & Ingénierie des Données",
+            value=f"Rapport mensuel — Suivi des enseignements ({CFG['dept_code']}) | {CFG['department_long']}",
             key="pdf_title_export")
 
         logo_bytes = logo.getvalue() if logo else None
@@ -2862,10 +2968,10 @@ with tab_export:
                 mois_couverts=mois_couverts,
                 thresholds=thresholds,
                 logo_bytes=logo_bytes,
-                author_name="Ibrahima SY",
-                assistant_name="Dieynaba Barry",
-                department="Département IA & Ingénierie des Données (IAID)",
-                institution="Institut Supérieur Informatique",)
+                author_name=CFG["author_name"],
+                assistant_name=CFG["assistant_name"],
+                department=CFG["department_long"],
+                institution=CFG["institution"],)
 
             st.download_button(
                 "⬇️ Télécharger le PDF",
