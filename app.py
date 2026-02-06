@@ -37,6 +37,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 import base64
 import plotly.io as pio
+import streamlit.components.v1 as components
+
 
 # =========================================================
 # CONFIG DÉPARTEMENT (SEUL ENDROIT À MODIFIER PAR DÉPARTEMENT)
@@ -210,12 +212,6 @@ section[data-testid="stSidebar"]{
   justify-content:center;
   align-items:center;
   margin: 8px 0 14px 0;
-}
-.sidebar-logo-wrap{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 18px 0 20px 0;
 }
 
 .sidebar-logo-wrap img{
@@ -1718,20 +1714,21 @@ with st.sidebar:
 
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
-st.markdown(
-f"""
+header_html = f"""
 <div class="iaid-header">
-  <div class="iaid-hrow">
-    <div class="iaid-hleft">
-      <div class="iaid-logo">{CFG["dept_code"]}</div>
+  <div class="iaid-hrow" style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;">
+    <div class="iaid-hleft" style="display:flex;gap:12px;align-items:flex-start;">
+      <div class="iaid-logo" style="font-weight:950;font-size:18px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.32);padding:6px 10px;border-radius:12px;">
+        {CFG["dept_code"]}
+      </div>
       <div>
         <div class="iaid-htitle">{CFG["header_title"]}</div>
         <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
       </div>
     </div>
 
-    <div class="iaid-meta">
-      <div>Dernière mise à jour</div>
+    <div class="iaid-meta" style="text-align:right;">
+      <div style="font-size:12px;font-weight:800;opacity:.95;">Dernière mise à jour</div>
       <div style="font-size:13px;font-weight:950;">{now_str}</div>
     </div>
   </div>
@@ -1742,9 +1739,11 @@ f"""
     <div class="iaid-badge">Exports : PDF officiel + Excel consolidé</div>
   </div>
 </div>
-""",
-unsafe_allow_html=True
-)
+"""
+
+# ✅ rendu HTML robuste : ne s’affichera plus en texte
+components.html(header_html, height=170)
+
 
 
 
