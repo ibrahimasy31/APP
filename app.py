@@ -740,21 +740,143 @@ button[kind="secondary"] *{
   text-decoration: none !important;
 }
 
-/* -----------------------------
-   HEADER DG (ANCIEN STYLE EXACT + LOGO TEXTE)
-------------------------------*/
+
+""",
+unsafe_allow_html=True
+)
+
+st.markdown(
+"""
+<style>
+/* =========================================================
+   IAID — THÈME BLEU (LIGHT FORCÉ) + HEADER ANCIEN (EXACT)
+========================================================= */
+
+/* Force un rendu "light" même si le navigateur est en dark mode */
+:root, html, body, .stApp { color-scheme: light !important; }
+@media (prefers-color-scheme: dark) {
+  html, body, .stApp { background: #F6F8FC !important; }
+  body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 { color: #0F172A !important; }
+}
+
+/* VARIABLES */
+:root{
+  --bg:#F6F8FC;
+  --bg2:#EEF3FA;
+  --card:#FFFFFF;
+  --text:#0F172A;
+  --muted:#475569;
+  --line:#E3E8F0;
+
+  --blue:#0B3D91;
+  --blue2:#134FA8;
+  --blue3:#1F6FEB;
+
+  --focus:#5AA2FF;
+}
+
+/* BACKGROUND & TEXTE GLOBAL */
+html, body, .stApp{
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
+}
+body, .stApp, p, span, div, label{
+  color: var(--text) !important;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5{
+  color: var(--blue) !important;
+  font-weight: 850 !important;
+}
+
+/* STREAMLIT LAYOUT */
+.block-container{ padding-top: .25rem !important; padding-bottom: 4.5rem !important; }
+header[data-testid="stHeader"], div[data-testid="stToolbar"]{
+  visibility: hidden !important; height: 0px !important;
+}
+
+/* SIDEBAR */
+section[data-testid="stSidebar"]{
+  background: var(--card) !important;
+  border-right: 1px solid var(--line);
+}
+.sidebar-card{
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 18px rgba(14,30,37,0.05);
+}
+
+/* INPUTS */
+div[data-baseweb="input"] > div,
+div[data-baseweb="select"] > div{
+  background: #FFFFFF !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+}
+div[data-baseweb="input"] input,
+div[data-baseweb="select"] *{
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+*:focus-visible{
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 2px !important;
+  border-radius: 10px;
+}
+
+/* DATAFRAMES */
+div[data-testid="stDataFrame"]{
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  padding: 6px !important;
+}
+
+/* BOUTONS (robuste multi-navigateurs) */
+.stButton > button,
+.stDownloadButton > button,
+button[kind="primary"],
+button[kind="secondary"]{
+  background: var(--blue) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 10px 16px !important;
+  font-weight: 900 !important;
+}
+.stButton > button *,
+.stDownloadButton > button *,
+button[kind="primary"] *,
+button[kind="secondary"] *{
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+.stButton > button:hover,
+.stDownloadButton > button:hover{
+  background: var(--blue2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+}
+.stDownloadButton a{ text-decoration: none !important; }
+
+/* ==============================
+   ✅ HEADER — ANCIEN DIMENSIONS (EXACT)
+==============================*/
 .iaid-header{
   background: linear-gradient(100deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
   color:#fff;
-  padding: 22px 24px;            /* ✅ un peu + haut */
-  border-radius: 22px;           /* ✅ comme l'ancien */
+  padding: 18px 20px;          /* ✅ ancien */
+  border-radius: 22px;         /* ✅ ancien */
   box-shadow: 0 18px 40px rgba(14,30,37,0.14);
   position: relative;
   overflow:hidden;
   margin: 0 0 14px 0;
 }
 
-/* ✅ les 2 formes décoratives de l'ancienne version */
+/* formes décoratives */
 .iaid-header:before{
   content:"";
   position:absolute;
@@ -781,7 +903,7 @@ button[kind="secondary"] *{
   gap:14px;
   align-items:center;
   justify-content: space-between;
-  position:relative; /* ✅ important (au-dessus des pseudo-elements) */
+  position:relative;
 }
 
 .iaid-hleft{
@@ -791,19 +913,14 @@ button[kind="secondary"] *{
   min-width: 0;
 }
 
-/* ✅ LOGO TEXTE (au lieu de img) */
 .iaid-logo{
-  width:54px;
-  height:54px;
-  border-radius:16px;
+  width:54px; height:54px;
+  border-radius: 16px;
   background: rgba(255,255,255,0.16);
   border: 1px solid rgba(255,255,255,0.24);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 
-  /* ✅ style texte */
   color:#FFFFFF !important;
   font-weight: 950;
   font-size: 18px;
@@ -811,29 +928,18 @@ button[kind="secondary"] *{
   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-/* ✅ si jamais tu remets une image un jour, ça marche aussi */
-.iaid-logo img{ width:100%; height:100%; object-fit:cover; }
-
-.iaid-htitle{
-  font-size: 20px;
-  font-weight: 950;
-  letter-spacing:.3px;
-}
-
-.iaid-hsub{
-  margin-top:6px;
-  font-size: 13px;
-  opacity:.95;
-  line-height:1.35;
-}
+.iaid-htitle{ font-size: 20px; font-weight: 950; letter-spacing:.3px; }
+.iaid-hsub{ margin-top:6px; font-size: 13px; opacity:.95; line-height:1.35; }
 
 .iaid-meta{
   text-align:right;
   font-size:12px;
   opacity:.95;
   font-weight: 800;
+  line-height: 1.2; /* ✅ évite d’augmenter la hauteur */
 }
 
+/* badges */
 .iaid-badges{
   margin-top: 12px;
   display:flex;
@@ -841,7 +947,6 @@ button[kind="secondary"] *{
   flex-wrap: wrap;
   position: relative;
 }
-
 .iaid-badge{
   background: rgba(255,255,255,0.16);
   border: 1px solid rgba(255,255,255,0.24);
@@ -852,6 +957,25 @@ button[kind="secondary"] *{
   backdrop-filter: blur(6px);
 }
 
+/* FOOTER SIGNATURE (FIXE) */
+.footer-signature{
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.96);
+  border-top: 1px solid var(--line);
+  padding: 10px 18px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+  z-index: 999;
+  backdrop-filter: blur(6px);
+}
+.footer-signature strong{
+  color: var(--text);
+  font-weight: 900;
+}
 </style>
 """,
 unsafe_allow_html=True
@@ -2039,9 +2163,6 @@ with st.sidebar:
 # =========================================================
 # ✅ HEADER (CLEAN) — zéro code affiché, zéro string parasite
 # =========================================================
-# =========================================================
-# ✅ HEADER (CLEAN) — basé sur CFG (aucune variable manquante)
-# =========================================================
 now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 st.markdown(
@@ -2055,6 +2176,7 @@ f"""
         <div class="iaid-hsub">{CFG["header_subtitle"]}</div>
       </div>
     </div>
+
     <div class="iaid-meta">
       <div>Dernière mise à jour</div>
       <div style="font-size:13px;font-weight:950;">{now_str}</div>
@@ -2070,6 +2192,7 @@ f"""
 """,
 unsafe_allow_html=True
 )
+
 
 
 st.markdown(
