@@ -740,6 +740,42 @@ button[kind="secondary"] *{
   text-decoration: none !important;
 }
 
+/* =========================
+   ✅ BANDEAU SIMPLE IAID
+========================= */
+.iaid-banner{
+  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
+  margin: 0 0 14px 0;
+}
+.iaid-banner .title{
+  color:#FFFFFF !important;
+  font-size: 20px;
+  font-weight: 950;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+}
+.iaid-banner .subtitle{
+  color: rgba(255,255,255,0.95) !important;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+.iaid-banner .iaid-badges{ margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap; }
+.iaid-banner .iaid-badge{
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.32);
+  color:#FFFFFF !important;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+
 
 </style>
 """,
