@@ -1724,10 +1724,6 @@ f"""
       </div>
     </div>
 
-    <div class="iaid-meta">
-      <div>Dernière mise à jour</div>
-      <div style="font-size:13px;font-weight:950;"></div>
-    </div>
   </div>
 
   <div class="iaid-badges">
