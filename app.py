@@ -97,6 +97,106 @@ st.set_page_config(
 )
 
 
+# ==============================
+# ✅ RESUME IA (OPENAI) — OBSERVATIONS
+# ==============================
+from openai import OpenAI
+
+def _build_obs_payload(df_obs: pd.DataFrame, max_lines: int = 300) -> str:
+    """
+    Transforme les observations en texte court, lisible par un LLM.
+    On limite le nombre de lignes pour éviter les prompts énormes.
+    """
+    cols_needed = ["Classe", "Matière", "Écart", "Statut_auto", "Observations"]
+    for c in cols_needed:
+        if c not in df_obs.columns:
+            df_obs[c] = ""
+
+    d = df_obs.copy()
+    d["Observations"] = (
+        d["Observations"].astype(str)
+        .replace({"nan": "", "None": ""})
+        .fillna("")
+        .str.strip()
+    )
+    d = d[d["Observations"].str.len() > 0].copy()
+
+    # Prioriser : retards les plus critiques d'abord
+    if "Écart" in d.columns:
+        d["Écart"] = pd.to_numeric(d["Écart"], errors="coerce").fillna(0)
+        d = d.sort_values("Écart", ascending=True)
+
+    d = d.head(max_lines)
+
+    lines = []
+    for _, r in d.iterrows():
+        lines.append(
+            f"- Classe: {str(r.get('Classe','')).strip()} | "
+            f"Matière: {str(r.get('Matière','')).strip()} | "
+            f"Statut: {str(r.get('Statut_auto','')).strip()} | "
+            f"Écart(h): {r.get('Écart', 0)} | "
+            f"Obs: {str(r.get('Observations','')).strip()}"
+        )
+    return "\n".join(lines)
+
+
+def summarize_observations_with_openai(
+    df_filtered: pd.DataFrame,
+    mois_min: str,
+    mois_max: str,
+    cfg: dict,
+    model: str = "gpt-4.1-mini",
+    max_lines: int = 300
+) -> str:
+    """
+    Retourne un résumé DG-ready des observations.
+    """
+    api_key = st.secrets.get("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY manquant dans .streamlit/secrets.toml")
+
+    client = OpenAI(api_key=api_key)
+
+    # garder uniquement observations
+    df_obs = df_filtered.copy()
+    if "Observations" not in df_obs.columns:
+        df_obs["Observations"] = ""
+
+    payload = _build_obs_payload(df_obs, max_lines=max_lines)
+    if not payload.strip():
+        return "Aucune observation renseignée sur la période sélectionnée."
+
+    system = (
+        "Tu es un assistant de pilotage académique. "
+        "Tu dois produire un résumé professionnel, clair, actionnable, style Direction Générale. "
+        "Ne divulgue aucune donnée sensible (emails, infos perso)."
+    )
+
+    user = f"""
+Contexte:
+- Département: {cfg.get('department_long','')}
+- Période: {mois_min} → {mois_max}
+
+Données (observations consolidées):
+{payload}
+
+Tâche:
+1) Résumé exécutif (5–8 lignes)
+2) Points critiques récurrents (5–10 puces)
+3) Actions recommandées (3–7 actions)
+4) Synthèse par classe (1–2 lignes par classe max)
+Format: Markdown.
+""".strip()
+
+    # API Responses (recommandée)
+    resp = client.responses.create(
+        model=model,
+        input=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    )
+    return resp.output_text
 
 
 
@@ -3133,6 +3233,30 @@ with tab_export:
                 key="dl_pdf_obs"
             )
 
+            st.divider()
+            st.subheader("🧠 Résumé IA — Observations (OpenAI)")
+
+            if not st.session_state.get("is_admin", False):
+                st.info("🔒 Réservé Admin (PIN).")
+            else:
+                max_lines_llm = st.slider("Nombre max d'observations envoyées à l'IA", 50, 800, 300, 50)
+
+                if st.button("🧠 Générer le résumé IA (Observations)"):
+                    try:
+                        with st.spinner("Génération du résumé IA..."):
+                            summary_md = summarize_observations_with_openai(
+                                df_filtered=filtered,
+                                mois_min=mois_min,
+                                mois_max=mois_max,
+                                cfg=CFG,
+                                model="gpt-4.1-mini",
+                                max_lines=int(max_lines_llm),
+                            )
+                        st.markdown(summary_md)
+                    except Exception as e:
+                        st.error(f"Erreur IA: {e}")
+
+        
 
 
 
