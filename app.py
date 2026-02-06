@@ -313,445 +313,670 @@ st.set_page_config(
 # )
 
 
+# st.markdown(
+# """
+# <style>
+# /* Force un rendu "light" même si le navigateur est en dark mode */
+# :root, html, body, .stApp {
+#   color-scheme: light !important;
+# }
+
+# /* Si un navigateur applique prefers-color-scheme: dark, on neutralise */
+# @media (prefers-color-scheme: dark) {
+#   html, body, .stApp {
+#     background: #F6F8FC !important;
+#   }
+#   body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 {
+#     color: #0F172A !important;
+#   }
+# }
+
+# /* =========================================================
+#    IAID — THÈME BLEU EXÉCUTIF DG (FINAL)
+#    Lisibilité absolue • Tous navigateurs • Streamlit Cloud
+#    ========================================================= */
+
+# /* -----------------------------
+#    VARIABLES
+# ------------------------------*/
+# :root{
+#   --bg:#F6F8FC;
+#   --bg2:#EEF3FA;
+#   --card:#FFFFFF;
+#   --text:#0F172A;
+#   --muted:#475569;
+#   --line:#E3E8F0;
+
+#   --blue:#0B3D91;
+#   --blue2:#134FA8;
+#   --blue3:#1F6FEB;
+
+#   --ok:#1E8E3E;
+#   --warn:#F29900;
+#   --bad:#D93025;
+
+#   --focus:#5AA2FF;
+# }
+
+# /* -----------------------------
+#    BACKGROUND & TEXTE GLOBAL
+# ------------------------------*/
+# html, body, .stApp{
+#   background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
+# }
+
+# body, .stApp, p, span, div, label{
+#   color: var(--text) !important;
+#   -webkit-font-smoothing: antialiased;
+# }
+
+# /* Titres */
+# h1, h2, h3, h4, h5{
+#   color: var(--blue) !important;
+#   font-weight: 850 !important;
+# }
+
+# /* Liens */
+# a, a:visited{
+#   color: var(--blue3) !important;
+#   text-decoration: none;
+# }
+# a:hover{ text-decoration: underline; }
+
+# /* Caption */
+# .stCaption, small{
+#   color: var(--muted) !important;
+#   font-weight: 650;
+# }
+
+# /* -----------------------------
+#    STREAMLIT LAYOUT
+# ------------------------------*/
+# .block-container{
+#   padding-top: .25rem !important;
+#   padding-bottom: 4.5rem !important;
+# }
+# header[data-testid="stHeader"],
+# div[data-testid="stToolbar"]{
+#   visibility: hidden !important;
+#   height: 0px !important;
+# }
+
+# /* -----------------------------
+#    SIDEBAR
+# ------------------------------*/
+# section[data-testid="stSidebar"]{
+#   background: var(--card) !important;
+#   border-right: 1px solid var(--line);
+# }
+# .sidebar-card{
+#   background: var(--card);
+#   border: 1px solid var(--line);
+#   border-radius: 16px;
+#   padding: 12px;
+#   margin-bottom: 10px;
+#   box-shadow: 0 6px 18px rgba(14,30,37,0.05);
+# }
+# /* ---- LOGO SIDEBAR ---- */
+# .sidebar-logo-wrap{
+#   display:flex;
+#   justify-content:center;
+#   align-items:center;
+#   margin: 8px 0 14px 0;
+# }
+# .sidebar-logo-wrap{
+#   display: flex;
+#   justify-content: center;
+#   align-items: center;
+#   margin: 18px 0 20px 0;
+# }
+
+# .sidebar-logo-wrap img{
+#   width: 170px;        /* ⬅️ PLUS GRAND */
+#   max-width: 100%;
+#   height: auto;
+#   border-radius: 18px;
+#   border: 1px solid rgba(227,232,240,0.9);
+#   background: #FFFFFF;
+#   padding: 8px;
+#   box-shadow: 0 14px 32px rgba(14,30,37,0.12);
+# }
+# /* -----------------------------
+#    INPUTS (lisibilité ++)
+# ------------------------------*/
+# div[data-baseweb="input"] > div,
+# div[data-baseweb="select"] > div{
+#   background: #FFFFFF !important;
+#   border: 1px solid var(--line) !important;
+#   border-radius: 14px !important;
+# }
+# div[data-baseweb="input"] input,
+# div[data-baseweb="select"] *{
+#   color: var(--text) !important;
+#   font-weight: 700 !important;
+# }
+
+# span[data-baseweb="tag"]{
+#   background: #EAF1FF !important;
+#   border: 1px solid #CFE0FF !important;
+#   color: var(--blue) !important;
+#   font-weight: 800 !important;
+# }
+
+# /* Focus clavier */
+# *:focus-visible{
+#   outline: 3px solid var(--focus) !important;
+#   outline-offset: 2px !important;
+#   border-radius: 10px;
+# }
+
+
+# /* -----------------------------
+#    HEADER DG
+# ------------------------------*/
+# .iaid-header{
+#   background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
+#   color: #FFFFFF !important;
+#   padding: 18px 22px;
+#   border-radius: 18px;
+#   box-shadow: 0 16px 36px rgba(14,30,37,0.20);
+#   margin-bottom: 16px;
+# }
+# .iaid-header *{
+#   color: #FFFFFF !important;
+#   text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+# }
+# .iaid-htitle{ font-size: 20px; font-weight: 950; }
+# .iaid-hsub{ font-size: 13px; opacity: .95; margin-top: 4px; }
+
+# .iaid-badges{
+#   margin-top: 10px;
+#   display: flex;
+#   gap: 8px;
+#   flex-wrap: wrap;
+# }
+# .iaid-badge{
+#   background: rgba(255,255,255,0.18);
+#   border: 1px solid rgba(255,255,255,0.32);
+#   padding: 6px 10px;
+#   border-radius: 999px;
+#   font-size: 12px;
+#   font-weight: 850;
+# }
+
+# /* -----------------------------
+#    KPI CARDS
+# ------------------------------*/
+# .kpi-grid{
+#   display: grid;
+#   grid-template-columns: repeat(5, minmax(0,1fr));
+#   gap: 12px;
+# }
+# .kpi{
+#   background: var(--card);
+#   border: 1px solid var(--line);
+#   border-radius: 18px;
+#   padding: 14px 16px;
+#   box-shadow: 0 10px 24px rgba(14,30,37,0.06);
+#   position: relative;
+# }
+# .kpi:before{
+#   content:"";
+#   position:absolute;
+#   top:0; left:0;
+#   width:100%; height:4px;
+#   background: var(--blue);
+# }
+# .kpi-title{
+#   font-size: 12px;
+#   font-weight: 850;
+#   color: var(--muted) !important;
+# }
+# .kpi-value{
+#   font-size: 22px;
+#   font-weight: 950;
+#   margin-top: 6px;
+# }
+# .kpi-good:before{ background: var(--ok); }
+# .kpi-warn:before{ background: var(--warn); }
+# .kpi-bad:before{ background: var(--bad); }
+
+# /* -----------------------------
+#    TABS
+# ------------------------------*/
+# button[data-baseweb="tab"]{
+#   background: #FFFFFF !important;
+#   color: var(--text) !important;
+#   border-radius: 999px !important;
+#   padding: 10px 14px !important;
+#   font-weight: 850 !important;
+#   border: 1px solid var(--line) !important;
+# }
+# button[data-baseweb="tab"][aria-selected="true"]{
+#   background: #EAF1FF !important;
+#   color: var(--blue) !important;
+#   border: 1px solid var(--blue) !important;
+# }
+
+# /* -----------------------------
+#    DATAFRAMES / TABLES
+# ------------------------------*/
+# div[data-testid="stDataFrame"]{
+#   background: var(--card) !important;
+#   border: 1px solid var(--line) !important;
+#   border-radius: 16px !important;
+#   padding: 6px !important;
+# }
+
+# .table-wrap{
+#   background: var(--card);
+#   border: 1px solid var(--line);
+#   border-radius: 16px;
+#   overflow-x: auto;
+# }
+
+# /* -----------------------------
+#    ALERTES STREAMLIT
+# ------------------------------*/
+# div[data-testid="stAlert"]{
+#   border-radius: 16px !important;
+#   border: 1px solid var(--line) !important;
+# }
+# div[data-testid="stAlert"] *{
+#   color: var(--text) !important;
+#   font-weight: 700 !important;
+# }
+
+# /* =========================================================
+#    BOUTONS — FIX DÉFINITIF (IMPORTANT)
+# ========================================================= */
+
+# /* Bouton normal */
+# .stButton button{
+#   background: var(--blue) !important;
+#   border-radius: 14px !important;
+#   border: none !important;
+#   padding: 10px 16px !important;
+# }
+
+# /* Bouton téléchargement */
+# .stDownloadButton button{
+#   background: var(--blue) !important;
+#   border-radius: 14px !important;
+#   border: none !important;
+#   padding: 10px 16px !important;
+# }
+
+# /* TEXTE INTERNE — FIX STREAMLIT (span / p / div selon versions) */
+# .stButton button span,
+# .stButton button p,
+# .stButton button div,
+# .stDownloadButton button span,
+# .stDownloadButton button p,
+# .stDownloadButton button div{
+#   color: #FFFFFF !important;
+#   font-weight: 900 !important;
+# }
+
+# /* Cas où Streamlit applique une classe "primary" */
+# button[kind="primary"] span,
+# button[kind="primary"] p,
+# button[kind="primary"] div{
+#   color: #FFFFFF !important;
+#   font-weight: 900 !important;
+# }
+
+# /* Hover */
+# .stButton button:hover,
+# .stDownloadButton button:hover{
+#   background: var(--blue2) !important;
+#   transform: translateY(-1px);
+#   box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+# }
+
+# /* Sécurité Safari / Firefox */
+# .stDownloadButton a{
+#   text-decoration: none !important;
+# }
+
+# /* -----------------------------
+#    RESPONSIVE
+# ------------------------------*/
+# @media (max-width: 1200px){
+#   .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+# }
+# @media (max-width: 520px){
+#   .kpi-grid{ grid-template-columns: 1fr; }
+# }
+
+# /* -----------------------------
+#    FOOTER SIGNATURE (FIXE)
+# ------------------------------*/
+# .footer-signature{
+#   position: fixed;
+#   bottom: 0;
+#   left: 0;
+#   width: 100%;
+#   background: rgba(255,255,255,0.96);
+#   border-top: 1px solid var(--line);
+#   padding: 10px 18px;
+#   font-size: 12.5px;
+#   color: var(--muted);
+#   text-align: center;
+#   z-index: 999;
+#   backdrop-filter: blur(6px);
+# }
+# .footer-signature strong{
+#   color: var(--text);
+#   font-weight: 900;
+# }
+# /* =========================
+#    BADGES STATUT (PRO)
+# ========================= */
+# .badge{
+#   display:inline-block;
+#   padding: 5px 10px;
+#   border-radius: 999px;
+#   font-weight: 900;
+#   font-size: 12px;
+#   line-height: 1;
+#   border: 1px solid rgba(227,232,240,0.95);
+# }
+# .badge-ok{
+#   background: rgba(30,142,62,0.12);
+#   color: #1E8E3E;
+#   border-color: rgba(30,142,62,0.25);
+# }
+# .badge-warn{
+#   background: rgba(242,153,0,0.14);
+#   color: #B26A00;
+#   border-color: rgba(242,153,0,0.30);
+# }
+# .badge-bad{
+#   background: rgba(217,48,37,0.12);
+#   color: #D93025;
+#   border-color: rgba(217,48,37,0.25);
+# }
+
+# /* =========================================================
+#    ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
+#    - force couleur texte + svg + icônes
+#    - couvre stButton / stDownloadButton / kind="primary"
+# ========================================================= */
+
+# .stButton > button,
+# .stDownloadButton > button,
+# button[kind="primary"],
+# button[kind="secondary"]{
+#   background: var(--blue) !important;
+#   color: #FFFFFF !important;
+#   border: none !important;
+#   border-radius: 14px !important;
+#   padding: 10px 16px !important;
+#   font-weight: 900 !important;
+# }
+
+# /* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
+#    et les icônes en svg -> on force TOUS les enfants */
+# .stButton > button *,
+# .stDownloadButton > button *,
+# button[kind="primary"] *,
+# button[kind="secondary"] *{
+#   color: #FFFFFF !important;
+#   fill: #FFFFFF !important;
+#   stroke: #FFFFFF !important;
+# }
+
+# /* hover */
+# .stButton > button:hover,
+# .stDownloadButton > button:hover{
+#   background: var(--blue2) !important;
+#   transform: translateY(-1px);
+#   box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+# }
+
+# /* sécurité liens internes download */
+# .stDownloadButton a{
+#   text-decoration: none !important;
+# }
+
+
+# """,
+# unsafe_allow_html=True
+# )
+
+# st.markdown(
+# """
+# <style>
+# /* =========================================================
+#    IAID — THÈME BLEU (LIGHT FORCÉ) + HEADER ANCIEN (EXACT)
+# ========================================================= */
+
+# /* Force un rendu "light" même si le navigateur est en dark mode */
+# :root, html, body, .stApp { color-scheme: light !important; }
+# @media (prefers-color-scheme: dark) {
+#   html, body, .stApp { background: #F6F8FC !important; }
+#   body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 { color: #0F172A !important; }
+# }
+
+# /* VARIABLES */
+# :root{
+#   --bg:#F6F8FC;
+#   --bg2:#EEF3FA;
+#   --card:#FFFFFF;
+#   --text:#0F172A;
+#   --muted:#475569;
+#   --line:#E3E8F0;
+
+#   --blue:#0B3D91;
+#   --blue2:#134FA8;
+#   --blue3:#1F6FEB;
+
+#   --focus:#5AA2FF;
+# }
+
+# /* BACKGROUND & TEXTE GLOBAL */
+# html, body, .stApp{
+#   background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
+# }
+# body, .stApp, p, span, div, label{
+#   color: var(--text) !important;
+#   -webkit-font-smoothing: antialiased;
+# }
+# h1, h2, h3, h4, h5{
+#   color: var(--blue) !important;
+#   font-weight: 850 !important;
+# }
+
+# /* STREAMLIT LAYOUT */
+# .block-container{ padding-top: .25rem !important; padding-bottom: 4.5rem !important; }
+# header[data-testid="stHeader"], div[data-testid="stToolbar"]{
+#   visibility: hidden !important; height: 0px !important;
+# }
+
+# /* SIDEBAR */
+# section[data-testid="stSidebar"]{
+#   background: var(--card) !important;
+#   border-right: 1px solid var(--line);
+# }
+# .sidebar-card{
+#   background: var(--card);
+#   border: 1px solid var(--line);
+#   border-radius: 16px;
+#   padding: 12px;
+#   margin-bottom: 10px;
+#   box-shadow: 0 6px 18px rgba(14,30,37,0.05);
+# }
+
+# /* INPUTS */
+# div[data-baseweb="input"] > div,
+# div[data-baseweb="select"] > div{
+#   background: #FFFFFF !important;
+#   border: 1px solid var(--line) !important;
+#   border-radius: 14px !important;
+# }
+# div[data-baseweb="input"] input,
+# div[data-baseweb="select"] *{
+#   color: var(--text) !important;
+#   font-weight: 700 !important;
+# }
+# *:focus-visible{
+#   outline: 3px solid var(--focus) !important;
+#   outline-offset: 2px !important;
+#   border-radius: 10px;
+# }
+
+# /* DATAFRAMES */
+# div[data-testid="stDataFrame"]{
+#   background: var(--card) !important;
+#   border: 1px solid var(--line) !important;
+#   border-radius: 16px !important;
+#   padding: 6px !important;
+# }
+
+# /* BOUTONS (robuste multi-navigateurs) */
+# .stButton > button,
+# .stDownloadButton > button,
+# button[kind="primary"],
+# button[kind="secondary"]{
+#   background: var(--blue) !important;
+#   color: #FFFFFF !important;
+#   border: none !important;
+#   border-radius: 14px !important;
+#   padding: 10px 16px !important;
+#   font-weight: 900 !important;
+# }
+# .stButton > button *,
+# .stDownloadButton > button *,
+# button[kind="primary"] *,
+# button[kind="secondary"] *{
+#   color: #FFFFFF !important;
+#   fill: #FFFFFF !important;
+#   stroke: #FFFFFF !important;
+# }
+# .stButton > button:hover,
+# .stDownloadButton > button:hover{
+#   background: var(--blue2) !important;
+#   transform: translateY(-1px);
+#   box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+# }
+# .stDownloadButton a{ text-decoration: none !important; }
+
+# /* ==============================
+#    ✅ HEADER — ANCIEN DIMENSIONS (EXACT)
+# ==============================*/
+# .iaid-header{
+#   background: linear-gradient(100deg, #0B3D91 0%, #1F6FEB 55%, #5AA2FF 100%);
+#   color:#fff;
+#   padding: 18px 20px;          /* ✅ ancien */
+#   border-radius: 22px;         /* ✅ ancien */
+#   box-shadow: 0 18px 40px rgba(14,30,37,0.14);
+#   position: relative;
+#   overflow:hidden;
+#   margin: 0 0 14px 0;
+# }
+
+# /* formes décoratives */
+# .iaid-header:before{
+#   content:"";
+#   position:absolute;
+#   top:-45%;
+#   left:-25%;
+#   width:70%;
+#   height:220%;
+#   transform: rotate(18deg);
+#   background: rgba(255,255,255,0.10);
+# }
+# .iaid-header:after{
+#   content:"";
+#   position:absolute;
+#   right:-120px;
+#   top:-120px;
+#   width:260px;
+#   height:260px;
+#   border-radius: 50%;
+#   background: rgba(255,255,255,0.10);
+# }
+
+# .iaid-hrow{
+#   display:flex;
+#   gap:14px;
+#   align-items:center;
+#   justify-content: space-between;
+#   position:relative;
+# }
+
+# .iaid-hleft{
+#   display:flex;
+#   gap:14px;
+#   align-items:center;
+#   min-width: 0;
+# }
+
+# .iaid-logo{
+#   width:54px; height:54px;
+#   border-radius: 16px;
+#   background: rgba(255,255,255,0.16);
+#   border: 1px solid rgba(255,255,255,0.24);
+#   display:flex; align-items:center; justify-content:center;
+#   overflow:hidden;
+
+#   color:#FFFFFF !important;
+#   font-weight: 950;
+#   font-size: 18px;
+#   letter-spacing: .6px;
+#   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+# }
+
+# .iaid-htitle{ font-size: 20px; font-weight: 950; letter-spacing:.3px; }
+# .iaid-hsub{ margin-top:6px; font-size: 13px; opacity:.95; line-height:1.35; }
+
+
+# /* badges */
+# .iaid-badges{
+#   margin-top: 12px;
+#   display:flex;
+#   gap: 8px;
+#   flex-wrap: wrap;
+#   position: relative;
+# }
+# .iaid-badge{
+#   background: rgba(255,255,255,0.16);
+#   border: 1px solid rgba(255,255,255,0.24);
+#   padding: 6px 10px;
+#   border-radius: 999px;
+#   font-size: 12px;
+#   font-weight: 850;
+#   backdrop-filter: blur(6px);
+# }
+
+# /* FOOTER SIGNATURE (FIXE) */
+# .footer-signature{
+#   position: fixed;
+#   bottom: 0;
+#   left: 0;
+#   width: 100%;
+#   background: rgba(255,255,255,0.96);
+#   border-top: 1px solid var(--line);
+#   padding: 10px 18px;
+#   font-size: 12.5px;
+#   color: var(--muted);
+#   text-align: center;
+#   z-index: 999;
+#   backdrop-filter: blur(6px);
+# }
+# .footer-signature strong{
+#   color: var(--text);
+#   font-weight: 900;
+# }
+# </style>
+# """,
+# unsafe_allow_html=True
+# )
+
 st.markdown(
 """
 <style>
-/* Force un rendu "light" même si le navigateur est en dark mode */
-:root, html, body, .stApp {
-  color-scheme: light !important;
-}
-
-/* Si un navigateur applique prefers-color-scheme: dark, on neutralise */
-@media (prefers-color-scheme: dark) {
-  html, body, .stApp {
-    background: #F6F8FC !important;
-  }
-  body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 {
-    color: #0F172A !important;
-  }
-}
-
-/* =========================================================
-   IAID — THÈME BLEU EXÉCUTIF DG (FINAL)
-   Lisibilité absolue • Tous navigateurs • Streamlit Cloud
-   ========================================================= */
-
-/* -----------------------------
-   VARIABLES
-------------------------------*/
-:root{
-  --bg:#F6F8FC;
-  --bg2:#EEF3FA;
-  --card:#FFFFFF;
-  --text:#0F172A;
-  --muted:#475569;
-  --line:#E3E8F0;
-
-  --blue:#0B3D91;
-  --blue2:#134FA8;
-  --blue3:#1F6FEB;
-
-  --ok:#1E8E3E;
-  --warn:#F29900;
-  --bad:#D93025;
-
-  --focus:#5AA2FF;
-}
-
-/* -----------------------------
-   BACKGROUND & TEXTE GLOBAL
-------------------------------*/
-html, body, .stApp{
-  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
-}
-
-body, .stApp, p, span, div, label{
-  color: var(--text) !important;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Titres */
-h1, h2, h3, h4, h5{
-  color: var(--blue) !important;
-  font-weight: 850 !important;
-}
-
-/* Liens */
-a, a:visited{
-  color: var(--blue3) !important;
-  text-decoration: none;
-}
-a:hover{ text-decoration: underline; }
-
-/* Caption */
-.stCaption, small{
-  color: var(--muted) !important;
-  font-weight: 650;
-}
-
-/* -----------------------------
-   STREAMLIT LAYOUT
-------------------------------*/
-.block-container{
-  padding-top: .25rem !important;
-  padding-bottom: 4.5rem !important;
-}
-header[data-testid="stHeader"],
-div[data-testid="stToolbar"]{
-  visibility: hidden !important;
-  height: 0px !important;
-}
-
-/* -----------------------------
-   SIDEBAR
-------------------------------*/
-section[data-testid="stSidebar"]{
-  background: var(--card) !important;
-  border-right: 1px solid var(--line);
-}
-.sidebar-card{
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 6px 18px rgba(14,30,37,0.05);
-}
-/* ---- LOGO SIDEBAR ---- */
-.sidebar-logo-wrap{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  margin: 8px 0 14px 0;
-}
-.sidebar-logo-wrap{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 18px 0 20px 0;
-}
-
-.sidebar-logo-wrap img{
-  width: 170px;        /* ⬅️ PLUS GRAND */
-  max-width: 100%;
-  height: auto;
-  border-radius: 18px;
-  border: 1px solid rgba(227,232,240,0.9);
-  background: #FFFFFF;
-  padding: 8px;
-  box-shadow: 0 14px 32px rgba(14,30,37,0.12);
-}
-/* -----------------------------
-   INPUTS (lisibilité ++)
-------------------------------*/
-div[data-baseweb="input"] > div,
-div[data-baseweb="select"] > div{
-  background: #FFFFFF !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 14px !important;
-}
-div[data-baseweb="input"] input,
-div[data-baseweb="select"] *{
-  color: var(--text) !important;
-  font-weight: 700 !important;
-}
-
-span[data-baseweb="tag"]{
-  background: #EAF1FF !important;
-  border: 1px solid #CFE0FF !important;
-  color: var(--blue) !important;
-  font-weight: 800 !important;
-}
-
-/* Focus clavier */
-*:focus-visible{
-  outline: 3px solid var(--focus) !important;
-  outline-offset: 2px !important;
-  border-radius: 10px;
-}
-
-
-/* -----------------------------
-   HEADER DG
-------------------------------*/
-.iaid-header{
-  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
-  color: #FFFFFF !important;
-  padding: 18px 22px;
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
-  margin-bottom: 16px;
-}
-.iaid-header *{
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
-}
-.iaid-htitle{ font-size: 20px; font-weight: 950; }
-.iaid-hsub{ font-size: 13px; opacity: .95; margin-top: 4px; }
-
-.iaid-badges{
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.iaid-badge{
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.32);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-/* -----------------------------
-   KPI CARDS
-------------------------------*/
-.kpi-grid{
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0,1fr));
-  gap: 12px;
-}
-.kpi{
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.06);
-  position: relative;
-}
-.kpi:before{
-  content:"";
-  position:absolute;
-  top:0; left:0;
-  width:100%; height:4px;
-  background: var(--blue);
-}
-.kpi-title{
-  font-size: 12px;
-  font-weight: 850;
-  color: var(--muted) !important;
-}
-.kpi-value{
-  font-size: 22px;
-  font-weight: 950;
-  margin-top: 6px;
-}
-.kpi-good:before{ background: var(--ok); }
-.kpi-warn:before{ background: var(--warn); }
-.kpi-bad:before{ background: var(--bad); }
-
-/* -----------------------------
-   TABS
-------------------------------*/
-button[data-baseweb="tab"]{
-  background: #FFFFFF !important;
-  color: var(--text) !important;
-  border-radius: 999px !important;
-  padding: 10px 14px !important;
-  font-weight: 850 !important;
-  border: 1px solid var(--line) !important;
-}
-button[data-baseweb="tab"][aria-selected="true"]{
-  background: #EAF1FF !important;
-  color: var(--blue) !important;
-  border: 1px solid var(--blue) !important;
-}
-
-/* -----------------------------
-   DATAFRAMES / TABLES
-------------------------------*/
-div[data-testid="stDataFrame"]{
-  background: var(--card) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 16px !important;
-  padding: 6px !important;
-}
-
-.table-wrap{
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  overflow-x: auto;
-}
-
-/* -----------------------------
-   ALERTES STREAMLIT
-------------------------------*/
-div[data-testid="stAlert"]{
-  border-radius: 16px !important;
-  border: 1px solid var(--line) !important;
-}
-div[data-testid="stAlert"] *{
-  color: var(--text) !important;
-  font-weight: 700 !important;
-}
-
-/* =========================================================
-   BOUTONS — FIX DÉFINITIF (IMPORTANT)
-========================================================= */
-
-/* Bouton normal */
-.stButton button{
-  background: var(--blue) !important;
-  border-radius: 14px !important;
-  border: none !important;
-  padding: 10px 16px !important;
-}
-
-/* Bouton téléchargement */
-.stDownloadButton button{
-  background: var(--blue) !important;
-  border-radius: 14px !important;
-  border: none !important;
-  padding: 10px 16px !important;
-}
-
-/* TEXTE INTERNE — FIX STREAMLIT (span / p / div selon versions) */
-.stButton button span,
-.stButton button p,
-.stButton button div,
-.stDownloadButton button span,
-.stDownloadButton button p,
-.stDownloadButton button div{
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-/* Cas où Streamlit applique une classe "primary" */
-button[kind="primary"] span,
-button[kind="primary"] p,
-button[kind="primary"] div{
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-/* Hover */
-.stButton button:hover,
-.stDownloadButton button:hover{
-  background: var(--blue2) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
-}
-
-/* Sécurité Safari / Firefox */
-.stDownloadButton a{
-  text-decoration: none !important;
-}
-
-/* -----------------------------
-   RESPONSIVE
-------------------------------*/
-@media (max-width: 1200px){
-  .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-}
-@media (max-width: 520px){
-  .kpi-grid{ grid-template-columns: 1fr; }
-}
-
-/* -----------------------------
-   FOOTER SIGNATURE (FIXE)
-------------------------------*/
-.footer-signature{
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: rgba(255,255,255,0.96);
-  border-top: 1px solid var(--line);
-  padding: 10px 18px;
-  font-size: 12.5px;
-  color: var(--muted);
-  text-align: center;
-  z-index: 999;
-  backdrop-filter: blur(6px);
-}
-.footer-signature strong{
-  color: var(--text);
-  font-weight: 900;
-}
-/* =========================
-   BADGES STATUT (PRO)
-========================= */
-.badge{
-  display:inline-block;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-weight: 900;
-  font-size: 12px;
-  line-height: 1;
-  border: 1px solid rgba(227,232,240,0.95);
-}
-.badge-ok{
-  background: rgba(30,142,62,0.12);
-  color: #1E8E3E;
-  border-color: rgba(30,142,62,0.25);
-}
-.badge-warn{
-  background: rgba(242,153,0,0.14);
-  color: #B26A00;
-  border-color: rgba(242,153,0,0.30);
-}
-.badge-bad{
-  background: rgba(217,48,37,0.12);
-  color: #D93025;
-  border-color: rgba(217,48,37,0.25);
-}
-
-/* =========================================================
-   ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
-   - force couleur texte + svg + icônes
-   - couvre stButton / stDownloadButton / kind="primary"
-========================================================= */
-
-.stButton > button,
-.stDownloadButton > button,
-button[kind="primary"],
-button[kind="secondary"]{
-  background: var(--blue) !important;
-  color: #FFFFFF !important;
-  border: none !important;
-  border-radius: 14px !important;
-  padding: 10px 16px !important;
-  font-weight: 900 !important;
-}
-
-/* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
-   et les icônes en svg -> on force TOUS les enfants */
-.stButton > button *,
-.stDownloadButton > button *,
-button[kind="primary"] *,
-button[kind="secondary"] *{
-  color: #FFFFFF !important;
-  fill: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
-
-/* hover */
-.stButton > button:hover,
-.stDownloadButton > button:hover{
-  background: var(--blue2) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
-}
-
-/* sécurité liens internes download */
-.stDownloadButton a{
-  text-decoration: none !important;
-}
-
-
-""",
-unsafe_allow_html=True
-)
-
-st.markdown(
-"""
-<style>
-/* =========================================================
-   IAID — THÈME BLEU (LIGHT FORCÉ) + HEADER ANCIEN (EXACT)
-========================================================= */
-
 /* Force un rendu "light" même si le navigateur est en dark mode */
 :root, html, body, .stApp { color-scheme: light !important; }
 @media (prefers-color-scheme: dark) {
@@ -773,6 +998,9 @@ st.markdown(
   --blue3:#1F6FEB;
 
   --focus:#5AA2FF;
+  --ok:#1E8E3E;
+  --warn:#F29900;
+  --bad:#D93025;
 }
 
 /* BACKGROUND & TEXTE GLOBAL */
@@ -875,8 +1103,6 @@ button[kind="secondary"] *{
   overflow:hidden;
   margin: 0 0 14px 0;
 }
-
-/* formes décoratives */
 .iaid-header:before{
   content:"";
   position:absolute;
@@ -897,7 +1123,6 @@ button[kind="secondary"] *{
   border-radius: 50%;
   background: rgba(255,255,255,0.10);
 }
-
 .iaid-hrow{
   display:flex;
   gap:14px;
@@ -905,14 +1130,12 @@ button[kind="secondary"] *{
   justify-content: space-between;
   position:relative;
 }
-
 .iaid-hleft{
   display:flex;
   gap:14px;
   align-items:center;
   min-width: 0;
 }
-
 .iaid-logo{
   width:54px; height:54px;
   border-radius: 16px;
@@ -920,17 +1143,22 @@ button[kind="secondary"] *{
   border: 1px solid rgba(255,255,255,0.24);
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
-
   color:#FFFFFF !important;
   font-weight: 950;
   font-size: 18px;
   letter-spacing: .6px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
-
 .iaid-htitle{ font-size: 20px; font-weight: 950; letter-spacing:.3px; }
 .iaid-hsub{ margin-top:6px; font-size: 13px; opacity:.95; line-height:1.35; }
 
+/* ✅ META DATE À DROITE */
+.iaid-meta{
+  text-align:right;
+  font-size:12px;
+  opacity:.95;
+  font-weight: 800;
+}
 
 /* badges */
 .iaid-badges{
@@ -969,11 +1197,16 @@ button[kind="secondary"] *{
   color: var(--text);
   font-weight: 900;
 }
+
+/* Responsive */
+@media (max-width: 900px){
+  .iaid-hrow{ align-items:flex-start; }
+  .iaid-meta{ display:none; } /* si écran petit, on cache date */
+}
 </style>
 """,
 unsafe_allow_html=True
 )
-
 
 
 # -----------------------------
