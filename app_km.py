@@ -43,7 +43,7 @@ import plotly.io as pio
 # =========================================================
 CFG = {
     # Identité
-    "dept_code": "ISI KM",
+    "dept_code": "DE-KM",
     "institution": "Institut Supérieur Informatique",
     "department_long": "Directions des Etudes",
 
