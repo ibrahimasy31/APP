@@ -2215,9 +2215,9 @@ unsafe_allow_html=True
 st.markdown(
 f"""
 <div class="footer-signature">
-  <strong>{CFG["author_name"]}</strong> — Chef de Département • ✉️ {CFG["author_email"]}
+  <strong>{CFG["author_name"]}</strong> — Directeur des Études • ✉️ {CFG["author_email"]}
   <br/>
-  <strong>Assistante :</strong> {CFG["assistant_name"]} • ✉️ {CFG["assistant_email"]}
+  <strong>Chef de Département:</strong> {CFG["assistant_name"]} • ✉️ {CFG["assistant_email"]}
 </div>
 """,
 unsafe_allow_html=True
