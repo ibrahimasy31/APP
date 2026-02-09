@@ -1364,7 +1364,7 @@ def build_pdf_report(
     # Bloc signatures (Auteur + Assistante)
     sign_tbl = Table(
         [[
-            Paragraph(f"<b>Auteur :</b> {author_name}<br/><font size='8' color='#475569'>Chef de Département</font>", P),
+            Paragraph(f"<b>Auteur :</b> {author_name}<br/><font size='8' color='#475569'>Directeur des Études</font>", P),
             Paragraph(f"<b>Assistante :</b> {assistant_name}<br/><font size='8' color='#475569'>Support administratif</font>", P),
         ]],
         colWidths=[7.9*cm, 8.0*cm]
