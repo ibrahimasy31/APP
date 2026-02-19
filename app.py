@@ -3029,12 +3029,14 @@ with tab_export:
         st.write(f"**Destinataires :** {', '.join(recipients)}")
         st.caption("L'email inclura le rapport Excel consolidé et le rapport PDF mensuel en pièces jointes.")
 
-        if st.button("📩 Envoyer le rapport au DG (Excel + PDF joints)", key="btn_send_dg"):
+        if st.button("📩 Envoyer le rapport au DG (Excel + PDF + Observations joints)", key="btn_send_dg"):
             if lock_is_active(month_key):
                 st.warning("Un envoi est déjà en cours (anti double-envoi).")
             else:
                 with st.spinner("Génération des rapports et envoi en cours..."):
                     try:
+                        _logo_bytes = logo.getvalue() if logo else None
+
                         # — Excel consolidé —
                         _export_df = filtered[
                             ["Classe", "Semestre", "Matière", "Début prévu", "Fin prévue", "VHP"]
@@ -3058,7 +3060,6 @@ with tab_export:
                         })
 
                         # — PDF rapport mensuel —
-                        _logo_bytes = logo.getvalue() if logo else None
                         _pdf = build_pdf_report(
                             df=filtered[
                                 ["Classe", "Semestre", "Matière", "Début prévu", "Fin prévue", "VHP"]
@@ -3068,6 +3069,21 @@ with tab_export:
                             title=f"Rapport mensuel — Suivi des enseignements ({CFG['dept_code']}) | {today.strftime('%m/%Y')}",
                             mois_couverts=mois_couverts,
                             thresholds=thresholds,
+                            logo_bytes=_logo_bytes,
+                            author_name=CFG["author_name"],
+                            assistant_name=CFG["assistant_name"],
+                            department=CFG["department_long"],
+                            institution=CFG["institution"],
+                        )
+
+                        # — PDF observations —
+                        _pdf_obs = build_pdf_observations_report(
+                            df=filtered[
+                                ["Classe", "Semestre", "Type", "Matière", "Responsable",
+                                 "VHP", "VHR", "Écart", "Taux", "Statut_auto", "Observations"]
+                            ].copy(),
+                            title=f"Suivi des enseignements — Observations ({CFG['dept_code']}) | {today.strftime('%m/%Y')}",
+                            mois_couverts=mois_couverts,
                             logo_bytes=_logo_bytes,
                             author_name=CFG["author_name"],
                             assistant_name=CFG["assistant_name"],
@@ -3086,10 +3102,15 @@ with tab_export:
                                 _pdf,
                                 "application/pdf",
                             ),
+                            (
+                                f"{export_prefix}_observations_{today.strftime('%Y%m')}.pdf",
+                                _pdf_obs,
+                                "application/pdf",
+                            ),
                         ]
 
                         do_send(attachments=_attachments)
-                        st.success(f"✅ Email envoyé à {', '.join(recipients)} avec Excel + PDF en pièces jointes.")
+                        st.success(f"✅ Email envoyé à {', '.join(recipients)} avec 3 fichiers joints (Excel + PDF rapport + PDF observations).")
                     except Exception as e:
                         st.error(f"Erreur envoi : {e}")
 
