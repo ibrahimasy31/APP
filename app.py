@@ -1858,7 +1858,7 @@ with st.sidebar:
 
 
 
-    def do_send():
+    def do_send(attachments=None):
         # 1) lock anti double-envoi
         set_lock(month_key)
 
@@ -1874,6 +1874,7 @@ with st.sidebar:
                 subject=subject,
                 body_text=body_text,
                 body_html=body_html,
+                attachments=attachments or [],
             )
             # 2) marquer envoyé pour le mois
             set_last_reminder_month(month_key)
@@ -1882,21 +1883,8 @@ with st.sidebar:
             # 3) libérer le lock même en cas d'erreur
             clear_lock()
 
-
-    if st.button("Envoyer le rappel maintenant"):
-        if not is_admin:
-            st.error("Accès refusé : PIN incorrect.")
-        elif not recipients:
-            st.error("DG_EMAILS est vide dans st.secrets.")
-        elif lock_is_active(month_key):
-            st.warning("Un envoi est déjà en cours (anti double-envoi).")
-        else:
-            try:
-                do_send()
-                st.success("Rappel envoyé ✅")
-            except Exception as e:
-                st.error(f"Erreur envoi: {e}")
-
+    # Le bouton d'envoi est dans le tab Export (où les fichiers sont disponibles)
+    st.caption("📩 Le bouton d'envoi au DG se trouve en bas de l'onglet **Exports**.")
 
     sidebar_card_end()
 
@@ -3025,7 +3013,85 @@ with tab_export:
                     key="dl_ai_txt"
                 )
 
-        
+
+
+    # =========================================================
+    # 📩 ENVOI AU DG — avec Excel + PDF en pièces jointes
+    # =========================================================
+    st.divider()
+    st.subheader("📩 Envoyer au DG avec rapports en pièces jointes")
+
+    if not st.session_state.get("is_admin", False):
+        st.info("🔒 Réservé Admin — entrez le PIN dans la sidebar.")
+    elif not recipients:
+        st.warning("Aucun destinataire configuré (DG_EMAILS dans st.secrets).")
+    else:
+        st.write(f"**Destinataires :** {', '.join(recipients)}")
+        st.caption("L'email inclura le rapport Excel consolidé et le rapport PDF mensuel en pièces jointes.")
+
+        if st.button("📩 Envoyer le rapport au DG (Excel + PDF joints)", key="btn_send_dg"):
+            if lock_is_active(month_key):
+                st.warning("Un envoi est déjà en cours (anti double-envoi).")
+            else:
+                with st.spinner("Génération des rapports et envoi en cours..."):
+                    try:
+                        # — Excel consolidé —
+                        _export_df = filtered[
+                            ["Classe", "Semestre", "Matière", "Début prévu", "Fin prévue", "VHP"]
+                            + MOIS_COLS
+                            + ["VHR", "Écart", "Taux", "Statut_auto", "Observations"]
+                        ].copy()
+                        _export_df["Taux"] = (_export_df["Taux"] * 100).round(2)
+
+                        _synth_class = filtered.groupby("Classe").agg(
+                            Matieres=("Matière", "count"),
+                            Taux_moy=("Taux", "mean"),
+                            VHP_total=("VHP", "sum"),
+                            VHR_total=("VHR", "sum"),
+                            Retard_h=("Écart", lambda s: float(s[s < 0].sum())),
+                        ).reset_index()
+                        _synth_class["Taux_moy"] = (_synth_class["Taux_moy"] * 100).round(2)
+
+                        _xlsx = df_to_excel_bytes({
+                            "Consolidé": _export_df,
+                            "Synthese_Classes": _synth_class,
+                        })
+
+                        # — PDF rapport mensuel —
+                        _logo_bytes = logo.getvalue() if logo else None
+                        _pdf = build_pdf_report(
+                            df=filtered[
+                                ["Classe", "Semestre", "Matière", "Début prévu", "Fin prévue", "VHP"]
+                                + mois_couverts
+                                + ["VHR", "Écart", "Taux", "Statut_auto", "Observations"]
+                            ].copy(),
+                            title=f"Rapport mensuel — Suivi des enseignements ({CFG['dept_code']}) | {today.strftime('%m/%Y')}",
+                            mois_couverts=mois_couverts,
+                            thresholds=thresholds,
+                            logo_bytes=_logo_bytes,
+                            author_name=CFG["author_name"],
+                            assistant_name=CFG["assistant_name"],
+                            department=CFG["department_long"],
+                            institution=CFG["institution"],
+                        )
+
+                        _attachments = [
+                            (
+                                f"{export_prefix}_consolide_{today.strftime('%Y%m')}.xlsx",
+                                _xlsx,
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            ),
+                            (
+                                f"{export_prefix}_rapport_{today.strftime('%Y%m')}.pdf",
+                                _pdf,
+                                "application/pdf",
+                            ),
+                        ]
+
+                        do_send(attachments=_attachments)
+                        st.success(f"✅ Email envoyé à {', '.join(recipients)} avec Excel + PDF en pièces jointes.")
+                    except Exception as e:
+                        st.error(f"Erreur envoi : {e}")
 
 
 

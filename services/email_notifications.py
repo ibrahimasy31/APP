@@ -67,7 +67,13 @@ def send_email_reminder(
     subject: str,
     body_text: str,
     body_html: Optional[str] = None,
+    attachments: Optional[List[tuple]] = None,
 ) -> None:
+    """
+    attachments : liste de tuples (filename, data_bytes, mimetype)
+    ex: [("rapport.pdf", pdf_bytes, "application/pdf"),
+         ("export.xlsx", xlsx_bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    """
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = sender
@@ -75,6 +81,10 @@ def send_email_reminder(
     msg.set_content(body_text)
     if body_html:
         msg.add_alternative(body_html, subtype="html")
+
+    for filename, data, mimetype in (attachments or []):
+        maintype, subtype = mimetype.split("/", 1)
+        msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=filename)
 
     with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as s:
         s.starttls()
