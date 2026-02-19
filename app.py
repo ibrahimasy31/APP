@@ -48,7 +48,6 @@ from config.departments import get_department_config
 from services.email_notifications import (
     build_prof_email_html,
     clear_lock,
-    get_last_reminder_month,
     lock_is_active,
     send_email_reminder,
     set_last_reminder_month,
@@ -1684,9 +1683,6 @@ with st.sidebar:
 
     today = dt.date.today()
     month_key = today.strftime("%Y-%m")  # ex: 2026-01
-    last_sent = get_last_reminder_month()
-
-    auto_send = st.checkbox("Auto-envoi 1 fois/mois (à l’ouverture)", value=True)
 
     # --- Sécurité admin ---
     pin = st.text_input("Code admin (PIN)", type="password").strip()
@@ -1889,19 +1885,6 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Erreur envoi: {e}")
 
-
-    if auto_send and recipients:
-        if last_sent == month_key:
-            st.caption("Auto-rappel : déjà envoyé ce mois-ci ✅")
-        elif lock_is_active(month_key):
-            st.info("Auto-rappel : un envoi est déjà en cours (anti double-envoi).")
-        else:
-            st.info("Auto-rappel : pas encore envoyé ce mois-ci → envoi maintenant.")
-            try:
-                do_send()
-                st.success("Rappel mensuel envoyé automatiquement ✅")
-            except Exception as e:
-                st.error(f"Auto-envoi échoué: {e}")
 
     sidebar_card_end()
 
