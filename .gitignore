@@ -1,1 +1,29 @@
 venv/
+.venv/
+
+# Python cache/bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build/distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtualenv + local tools
+.python-version
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Streamlit secrets/local state
+.streamlit/secrets.toml
+.streamlit/*.lock
+.streamlit/*.json
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

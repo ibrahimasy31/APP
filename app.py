@@ -10,8 +10,13 @@ Usage:
 from __future__ import annotations
 
 import io
+import os
 import re
-from streamlit_autorefresh import st_autorefresh
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    def st_autorefresh(*args, **kwargs):
+        return 0
 import datetime as dt
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Optional
@@ -38,44 +43,36 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import base64
 import plotly.io as pio
 
-# =========================================================
-# CONFIG DÉPARTEMENT (SEUL ENDROIT À MODIFIER PAR DÉPARTEMENT)
-# =========================================================
-CFG = {
-    # Identité
-    "dept_code": "IAID",
-    "institution": "Institut Supérieur Informatique",
-    "department_long": "Département IA & Ingénierie des Données (IAID)",
+from config.departments import get_department_config
+from services.email_notifications import (
+    build_prof_email_html,
+    clear_lock,
+    get_last_reminder_month,
+    lock_is_active,
+    send_email_reminder,
+    set_last_reminder_month,
+    set_lock,
+)
+from ui.components import (
+    niveau_from_statut,
+    render_badged_table,
+    sidebar_card,
+    sidebar_card_end,
+    statut_badge_text,
+    style_table,
+)
+from utils.data_pipeline import (
+    DEFAULT_THRESHOLDS,
+    MOIS_COLS,
+    df_to_excel_bytes,
+    fetch_excel_if_changed,
+    fetch_headers,
+    load_excel_all_sheets,
+    make_long,
+)
 
-    # UI (page + header + footer)
-    "page_title": "IAID — Suivi des classes (Dashboard)",
-    "page_icon": "📊",
-    "header_title": "Département IA & Ingénierie des Données (IAID)",
-    "header_subtitle": "Tableau de bord de pilotage mensuel — Suivi des enseignements par classe & par matière",
-
-    # Signatures
-    "author_name": "Ibrahima SY",
-    "author_email": "ibsy@groupeisi.com",
-    "assistant_name": "Dieynaba Barry",
-    "assistant_email": "dbarry1@groupeisi.com",
-
-    # Assets
-    "logo_path": "assets/logo_iaid.jpg",
-
-    # Plotly palette
-    "plotly_colorway": ["#0B3D91", "#1F6FEB", "#5AA2FF", "#8EC5FF", "#BBDFFF"],
-
-    # Secrets keys (varient selon département)
-    "secrets": {
-        "excel_url": "IAID_EXCEL_URL",
-        "dg_emails": "DG_EMAILS",
-        "dashboard_url": "DASHBOARD_URL",
-        "admin_pin": "ADMIN_PIN",
-    },
-
-    # Email templates (prefix)
-    "email_prefix": "IAID",
-}
+# Choix du profil via APP_DEPT_PROFILE: IAID (défaut), KM, DRS
+CFG = get_department_config(os.getenv("APP_DEPT_PROFILE", "IAID"))
 
 
 _tpl_name = CFG["dept_code"].lower()
@@ -95,6 +92,13 @@ st.set_page_config(
     layout="wide",
     page_icon=CFG["page_icon"],
 )
+
+
+def safe_secret(key: str, default=""):
+    try:
+        return st.secrets.get(key, default)
+    except Exception:
+        return default
 
 
 # ==============================
@@ -151,7 +155,7 @@ def summarize_observations_with_openai(
     """
     Retourne un résumé DG-ready des observations.
     """
-    api_key = st.secrets.get("OPENAI_API_KEY", "").strip()
+    api_key = str(safe_secret("OPENAI_API_KEY", "")).strip()
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY manquant dans .streamlit/secrets.toml")
 
@@ -698,573 +702,7 @@ unsafe_allow_html=True
 
 
 
-# -----------------------------
-# Paramètres
-# -----------------------------
-MOIS_COLS = ["Oct", "Nov", "Déc", "Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août"]
-# Pour l’ordre chrono (année académique)
-MOIS_ORDER = {m:i for i,m in enumerate(MOIS_COLS, start=1)}
-
-DEFAULT_THRESHOLDS = {
-    "taux_vert": 0.90,
-    "taux_orange": 0.60,
-    "ecart_critique": -6,  # heures
-    "max_non_demarre": 0.25,  # 25% matières non démarrées
-}
-
-# -----------------------------
-# Utilitaires
-# -----------------------------
-def clean_colname(s: str) -> str:
-    s = str(s)
-    s = s.replace("\n", " ").replace('"', "").strip()
-    s = re.sub(r"\s+", " ", s)
-    return s
-
-def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    df.columns = [clean_colname(c) for c in df.columns]
-    # Harmonisation fréquente
-    rename_map = {
-    # On évite de garder "Taux (%)" comme champ principal (on recalcule Taux)
-    "Taux (%)": "Taux_excel",
-    "Taux": "Taux_excel",
-
-    # Mesures
-    "Ecart": "Écart",
-    "Écart": "Écart",
-    "Vhr": "VHR",
-    "VHP ": "VHP",
-
-    # Libellés
-    "Matiere": "Matière",
-    "Matière ": "Matière",
-
-    # --------- AJOUT PRO ---------
-    # Responsable
-    "Responsable ": "Responsable",
-    "Enseignant": "Responsable",
-    "Prof": "Responsable",
-
-    # Semestre
-    "Semestre ": "Semestre",
-    "Semester": "Semestre",
-
-    # Observations
-    "Observation": "Observations",
-    "Observations ": "Observations",
-
-    # Dates prévues (si tu les as dans certaines feuilles)
-    "Début prévu ": "Début prévu",
-    "Debut prevu": "Début prévu",
-    "Début": "Début prévu",
-    "Fin prévue ": "Fin prévue",
-    "Fin prevue": "Fin prévue",
-    "Fin": "Fin prévue",
-
-    # Email enseignant
-    "Mail": "Email",
-    "E-mail": "Email",
-    "Email ": "Email",
-    "Email enseignant": "Email",
-    "Email Enseignant": "Email",
-    }
-
-    df = df.rename(columns={k:v for k,v in rename_map.items() if k in df.columns})
-    return df
-
-def ensure_month_cols(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    for m in MOIS_COLS:
-        if m not in df.columns:
-            df[m] = 0
-    return df
-
-def to_numeric_safe(s: pd.Series) -> pd.Series:
-    # support strings like "9h" or "9,5"
-    def conv(x):
-        if pd.isna(x):
-            return np.nan
-        if isinstance(x, (int, float, np.number)):
-            return float(x)
-        x = str(x).strip()
-        x = x.replace(",", ".")
-        x = re.sub(r"[^0-9\.\-]", "", x)
-        if x == "":
-            return np.nan
-        try:
-            return float(x)
-        except:
-            return np.nan
-    return s.apply(conv)
-
-def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    # --------- AJOUT PRO : colonnes garanties ---------
-    for c in ["Semestre", "Observations", "Début prévu", "Fin prévue"]:
-        if c not in df.columns:
-            df[c] = ""
-            
-    # Garantir Responsable
-    if "Responsable" not in df.columns:
-        df["Responsable"] = ""
-
-    df["Responsable"] = (
-        df["Responsable"].astype(str)
-        .replace({"nan": "", "None": ""})
-        .fillna("")
-        .str.replace("\n", " ", regex=False)
-        .str.strip()
-    )
-
-    # Garantir Email
-    if "Email" not in df.columns:
-        df["Email"] = ""
-
-    df["Email"] = (
-        df["Email"].astype(str)
-        .replace({"nan": "", "None": ""})
-        .fillna("")
-        .str.strip()
-        .str.lower()
-    )
-
-
-
-    # Nettoyage texte (éviter 'nan')
-    for c in ["Matière", "Semestre", "Observations"]:
-        df[c] = df[c].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-
-    df["Début prévu"] = df["Début prévu"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-    df["Fin prévue"]  = df["Fin prévue"].astype(str).replace({"nan": "", "None": ""}).fillna("").str.strip()
-
-    df["VHP"] = to_numeric_safe(df["VHP"]).fillna(0)
-    for m in MOIS_COLS:
-        df[m] = to_numeric_safe(df[m]).fillna(0)
-
-    df["VHR"] = df[MOIS_COLS].sum(axis=1)
-    df["Écart"] = df["VHR"] - df["VHP"]
-    df["Taux"] = np.where(df["VHP"] == 0, 0, df["VHR"] / df["VHP"])
-
-    def status_row(vhr, vhp):
-        if vhr <= 0:
-            return "Non démarré"
-        if vhr < vhp:
-            return "En cours"
-        return "Terminé"
-
-    df["Statut_auto"] = [status_row(vhr, vhp) for vhr, vhp in zip(df["VHR"], df["VHP"])]
-
-    # Garder l'ancien champ "Statut" si présent mais proposer "Statut_auto"
-    if "Statut" not in df.columns:
-        df["Statut"] = df["Statut_auto"]
-    else:
-        df["Statut"] = df["Statut"].astype(str).replace({"nan": ""}).fillna("")
-
-    if "Observations" not in df.columns:
-        df["Observations"] = ""
-
-    # Nettoyage Matière
-    df["Matière"] = df["Matière"].astype(str).str.replace("\n", " ").str.strip()
-    df["Matière"] = df["Matière"].str.replace(r"\s+", " ", regex=True)
-
-    # Indicateur "Matière" vide
-    df["Matière_vide"] = df["Matière"].eq("") | df["Matière"].str.lower().eq("nan")
-
-    return df
-
-def unpivot_months(df: pd.DataFrame) -> pd.DataFrame:
-    # Format long : Classe, Matière, VHP, Mois, Heures
-    id_cols = [c for c in [
-        "_rowid",
-        "Classe", "Semestre", "Matière", "Responsable",
-        "VHP", "VHR", "Écart", "Taux",
-        "Statut_auto", "Statut", "Observations",
-        "Début prévu", "Fin prévue"
-    ] if c in df.columns]
-    long = df.melt(id_vars=id_cols, value_vars=MOIS_COLS, var_name="Mois", value_name="Heures")
-    long["Mois_idx"] = long["Mois"].map(MOIS_ORDER).fillna(0).astype(int)
-    return long
-
-def df_to_excel_bytes(sheets: Dict[str, pd.DataFrame]) -> bytes:
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        for name, sheet_df in sheets.items():
-            sheet_df.to_excel(writer, sheet_name=name[:31], index=False)
-    return output.getvalue()
-
-from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
-
-def _with_cachebuster(u: str, cb: str) -> str:
-    p = urlparse(u)
-    q = dict(parse_qsl(p.query))
-    q["_cb"] = cb
-    return urlunparse((p.scheme, p.netloc, p.path, p.params, urlencode(q), p.fragment))
-
-
-@st.cache_data(show_spinner=False, max_entries=20)
-def fetch_excel_from_url(url: str, cache_bust: str) -> bytes:
-    headers = {
-        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
-    }
-
-    final_url = _with_cachebuster(url.strip(), cache_bust)
-    r = requests.get(final_url, timeout=45, headers=headers)
-    r.raise_for_status()
-    return r.content
-
-
-
-@st.cache_data(show_spinner=False)
-def make_long(df_period: pd.DataFrame) -> pd.DataFrame:
-    return unpivot_months(df_period)
-
-# -----------------------------
-# Rappel mensuel DG/DGE (Email)
-# -----------------------------
-REMINDER_DIR = Path(".streamlit")
-REMINDER_DIR.mkdir(parents=True, exist_ok=True)
-
-REMINDER_FILE = REMINDER_DIR / "last_reminder.json"
-LOCK_FILE     = REMINDER_DIR / "last_reminder.lock"
-
-
-def get_last_reminder_month() -> Optional[str]:
-    if REMINDER_FILE.exists():
-        try:
-            return json.loads(REMINDER_FILE.read_text()).get("month")
-        except Exception:
-            return None
-    return None
-
-def set_last_reminder_month(month_key: str) -> None:
-    REMINDER_FILE.write_text(json.dumps({"month": month_key}))
-
-def lock_is_active(month_key: str) -> bool:
-    """
-    Retourne True si un envoi est déjà en cours pour le mois courant.
-    Evite double-envoi si plusieurs sessions ouvrent l'app en même temps.
-    """
-    if not LOCK_FILE.exists():
-        return False
-    try:
-        payload = json.loads(LOCK_FILE.read_text())
-        return payload.get("month") == month_key and payload.get("status") == "sending"
-    except Exception:
-        return False
-
-def set_lock(month_key: str) -> None:
-    LOCK_FILE.write_text(json.dumps({
-        "month": month_key,
-        "status": "sending",
-        "ts": dt.datetime.now().isoformat()
-    }))
-
-def clear_lock() -> None:
-    try:
-        if LOCK_FILE.exists():
-            LOCK_FILE.unlink()
-    except Exception:
-        pass
-
-
-def send_email_reminder(
-    smtp_host: str,
-    smtp_port: int,
-    smtp_user: str,
-    smtp_pass: str,
-    sender: str,
-    recipients: List[str],
-    subject: str,
-    body_text: str,
-    body_html: Optional[str] = None,    
-) -> None:
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = ", ".join(recipients)
-
-    # 1) Version texte (compatibilité totale)
-    msg.set_content(body_text)
-
-    # 2) Version HTML (si disponible) — “tape à l’œil”
-    if body_html:
-        msg.add_alternative(body_html, subtype="html")
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as s:
-        s.starttls()
-        s.login(smtp_user, smtp_pass)
-        s.send_message(msg)
-
-def build_prof_email_html(
-    prof: str,
-    lot_label: str,
-    mois_min: str,
-    mois_max: str,
-    thresholds: dict,
-    gprof: pd.DataFrame
-) -> str:
-    def statut_chip_html(statut: str) -> str:
-        s = str(statut).strip()
-        if s == "Terminé":
-            return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(30,142,62,0.12);color:#1E8E3E;border:1px solid rgba(30,142,62,0.25);">✅ Terminé</span>'
-        if s == "En cours":
-            return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(242,153,0,0.14);color:#B26A00;border:1px solid rgba(242,153,0,0.30);">🟠 En cours</span>'
-        return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(217,48,37,0.12);color:#D93025;border:1px solid rgba(217,48,37,0.25);">🔴 Non démarré</span>'
-
-    lignes_html = ""
-    gshow = gprof.copy()
-
-    # sécurité colonnes
-    for c in ["Classe","Semestre","Type","Matière","VHP","VHR","Écart","Statut_auto","Raison_alerte"]:
-        if c not in gshow.columns:
-            gshow[c] = ""
-
-    gshow = gshow.sort_values(["Écart"], ascending=True)
-
-    for _, r in gshow.iterrows():
-        classe = str(r.get("Classe", ""))
-        sem = str(r.get("Semestre", ""))
-        typ = str(r.get("Type", ""))
-        mat = str(r.get("Matière", ""))[:80]
-        vhp = int(float(r.get("VHP", 0) or 0))
-        vhr = int(float(r.get("VHR", 0) or 0))
-        ec  = int(float(r.get("Écart", 0) or 0))
-        statut = str(r.get("Statut_auto", ""))
-        raison = str(r.get("Raison_alerte", ""))
-
-        ec_color = "#D93025" if ec <= thresholds["ecart_critique"] else "#0F172A"
-
-        lignes_html += f"""
-        <tr>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{classe}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{sem}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{typ}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{mat}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;">{vhp}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;">{vhr}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;text-align:center;font-weight:900;color:{ec_color};">{ec}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{statut_chip_html(statut)}</td>
-          <td style="padding:10px;border-bottom:1px solid #E3E8F0;">{raison}</td>
-        </tr>
-        """
-
-    now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
-
-    return f"""
-    <!doctype html>
-    <html>
-    <body style="margin:0;padding:0;background:#0B3D91;">
-    <div style="background:linear-gradient(180deg,#0B3D91 0%,#134FA8 100%);padding:34px 12px;">
-
-      <div style="max-width:900px;margin:0 auto;background:#FFFFFF;border-radius:20px;
-                  box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden;
-                  font-family:Arial,Helvetica,sans-serif;color:#0F172A;">
-
-        <div style="padding:22px 26px;background:linear-gradient(90deg,#0B3D91,#1F6FEB);color:#FFFFFF;">
-          <div style="font-size:18px;font-weight:900;">{CFG["dept_code"]} — Notification Enseignant</div>
-          <div style="margin-top:6px;font-size:13px;font-weight:700;opacity:.95;">
-            {lot_label} • Période : {mois_min} → {mois_max}
-          </div>
-          <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.9;">
-            Mise à jour : {now_str}
-          </div>
-        </div>
-
-        <div style="padding:26px;line-height:1.55;">
-          <p style="margin-top:0;">Bonjour <b>{prof}</b>,</p>
-
-          <p>
-            Vous avez <b>{len(gprof)} élément(s)</b> concerné(s) par le lot :
-            <b>{lot_label}</b>.
-          </p>
-
-          <div style="margin:14px 0;background:#F6F8FC;border:1px solid #E3E8F0;border-radius:14px;padding:14px 16px;">
-            <div style="font-weight:900;color:#0B3D91;margin-bottom:6px;">📌 Information</div>
-            <div style="font-size:13px;">Aucune action n’est requise. Message transmis à titre informatif.</div>
-          </div>
-
-          <div style="margin:18px 0;border:1px solid #E3E8F0;border-radius:14px;overflow:hidden;">
-            <table style="border-collapse:collapse;width:100%;font-size:13px;">
-              <thead>
-                <tr style="background:#F6F8FC;">
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Classe</th>
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Sem</th>
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Type</th>
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Matière</th>
-                  <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHP</th>
-                  <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">VHR</th>
-                  <th style="padding:10px;text-align:center;border-bottom:1px solid #E3E8F0;">Écart</th>
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Statut</th>
-                  <th style="padding:10px;text-align:left;border-bottom:1px solid #E3E8F0;">Raison</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lignes_html}
-              </tbody>
-            </table>
-          </div>
-
-          <p style="font-size:13px;color:#475569;">
-            Message généré automatiquement — {CFG["department_long"]}.
-          </p>
-        </div>
-
-        <div style="padding:14px 26px;background:#FBFCFF;border-top:1px solid #E3E8F0;
-                    font-size:12px;color:#475569;text-align:center;">
-                    {CFG["department_long"]}
-        </div>
-
-      </div>
-    </div>
-    </body>
-    </html>
-    """.strip()
-
-
-def add_badges(df: pd.DataFrame, status_col: str = "Statut_auto") -> pd.DataFrame:
-    out = df.copy()
-
-    if status_col not in out.columns:
-        # fallback
-        if "Statut_auto" in out.columns:
-            status_col = "Statut_auto"
-        elif "Statut" in out.columns:
-            status_col = "Statut"
-        else:
-            out["Statut_badge"] = ""
-            return out
-
-    def badge(statut: str) -> str:
-        s = str(statut).strip()
-        if s == "Terminé":
-            return '<span class="badge badge-ok">✅ Terminé</span>'
-        if s == "En cours":
-            return '<span class="badge badge-warn">🟠 En cours</span>'
-        return '<span class="badge badge-bad">🔴 Non démarré</span>'
-
-    out["Statut_badge"] = out[status_col].apply(badge)
-    return out
-
-
-def style_table(df: pd.DataFrame) -> pd.DataFrame:
-    # On renvoie un dataframe "propre" (sans Styler)
-    out = df.copy()
-
-    # format % si Taux existe
-    if "Taux" in out.columns and np.issubdtype(out["Taux"].dtype, np.number):
-        out["Taux (%)"] = (out["Taux"] * 100).round(1)
-
-    return out
-
-def statut_badge_text(s: str) -> str:
-    s = str(s).strip()
-    if s == "Terminé":
-        return "✅ Terminé"
-    if s == "En cours":
-        return "🟠 En cours"
-    return "🔴 Non démarré"
-
-def niveau_from_statut(s: str) -> str:
-    s = str(s).strip()
-    if s == "Terminé":
-        return "OK"
-    if s == "En cours":
-        return "ATTENTION"
-    return "CRITIQUE"
-
-
-def render_badged_table(df: pd.DataFrame, columns: List[str], title: str = "") -> None:
-    if title:
-        st.write(title)
-
-    tmp = add_badges(df)
-
-    # si la colonne badge est demandée mais n'existe pas dans columns, on l'ajoute
-    if "Statut_badge" in tmp.columns and "Statut_badge" in columns:
-        pass
-
-    html = tmp[columns].to_html(escape=False, index=False, classes="iaid-table")
-    st.markdown(f'<div class="table-wrap">{html}</div>', unsafe_allow_html=True)
-
-@st.cache_data(show_spinner=False, max_entries=50)
-def fetch_headers(url: str, cache_bust: str) -> dict:
-    headers = {
-        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
-    }
-    r = requests.head(url.strip(), timeout=20, headers=headers, allow_redirects=True)
-    r.raise_for_status()
-    return dict(r.headers)
-
-@st.cache_data(show_spinner=False, max_entries=20)
-def fetch_excel_if_changed(url: str, etag_or_lm: str) -> bytes:
-    # si etag_or_lm change -> refetch, sinon cache streamlit
-    return fetch_excel_from_url(url, etag_or_lm)
-
-
-# -----------------------------
-# Lecture Excel multi-feuilles
-# -----------------------------
-@st.cache_data(show_spinner=False)
-def load_excel_all_sheets(file_bytes: bytes) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
-    """
-    Retourne:
-        - df concaténé (toutes feuilles)
-        - quality_issues: dict feuille -> liste d'alertes structurelles
-    """
-    quality_issues: Dict[str, List[str]] = {}
-    xls = pd.ExcelFile(io.BytesIO(file_bytes))
-    frames = []
-
-    for sheet in xls.sheet_names:
-        try:
-            df = pd.read_excel(xls, sheet_name=sheet)
-        except Exception as e:
-            quality_issues.setdefault(sheet, []).append(f"Lecture impossible: {e}")
-            continue
-
-        df = normalize_columns(df)
-
-        # Détection colonnes minimales
-        missing = []
-        for col in ["Matière", "VHP"]:
-            if col not in df.columns:
-                missing.append(col)
-
-        if missing:
-            quality_issues.setdefault(sheet, []).append(f"Colonnes manquantes: {', '.join(missing)}")
-            continue
-
-        df = ensure_month_cols(df)
-
-        # Avertissements légers
-        if df.columns.duplicated().any():
-            quality_issues.setdefault(sheet, []).append("Colonnes dupliquées détectées.")
-        if df["Matière"].isna().mean() > 0.20:
-            quality_issues.setdefault(sheet, []).append("Beaucoup de valeurs manquantes dans 'Matière' (>20%).")
-
-        df["Classe"] = sheet
-        frames.append(df)
-
-    if not frames:
-        return pd.DataFrame(), quality_issues
-
-    all_df = pd.concat(frames, ignore_index=True)
-    all_df = compute_metrics(all_df)
-    all_df["_rowid"] = np.arange(len(all_df))
-
-
-    # Qualité globale
-    if all_df["Matière_vide"].mean() > 0.05:
-        quality_issues.setdefault("__GLOBAL__", []).append("Plus de 5% de lignes ont une 'Matière' vide/invalides.")
-    if (all_df["VHP"] <= 0).mean() > 0.10:
-        quality_issues.setdefault("__GLOBAL__", []).append("Plus de 10% de lignes ont VHP <= 0 (à vérifier).")
-
-    return all_df, quality_issues
+# Paramètres + utilitaires déplacés dans `utils/data_pipeline.py`
 
 # -----------------------------
 # PDF (ReportLab)
@@ -1364,8 +802,16 @@ def build_pdf_report(
     # Bloc signatures (Auteur + Assistante)
     sign_tbl = Table(
         [[
-            Paragraph(f"<b>Auteur :</b> {author_name}<br/><font size='8' color='#475569'>Chef de Département</font>", P),
-            Paragraph(f"<b>Assistante :</b> {assistant_name}<br/><font size='8' color='#475569'>Support administratif</font>", P),
+            Paragraph(
+                f"<b>Auteur :</b> {author_name}<br/>"
+                f"<font size='8' color='#475569'>{CFG['author_role']}</font>",
+                P,
+            ),
+            Paragraph(
+                f"<b>{CFG['assistant_label']} :</b> {assistant_name}<br/>"
+                f"<font size='8' color='#475569'>{CFG['assistant_role']}</font>",
+                P,
+            ),
         ]],
         colWidths=[7.9*cm, 8.0*cm]
     )
@@ -1627,8 +1073,16 @@ def build_pdf_observations_report(
 
     sign_tbl = Table(
         [[
-            Paragraph(f"<b>Auteur :</b> {author_name}<br/><font size='8' color='#475569'>Chef de Département</font>", P),
-            Paragraph(f"<b>Assistante :</b> {assistant_name}<br/><font size='8' color='#475569'>Support administratif</font>", P),
+            Paragraph(
+                f"<b>Auteur :</b> {author_name}<br/>"
+                f"<font size='8' color='#475569'>{CFG['author_role']}</font>",
+                P,
+            ),
+            Paragraph(
+                f"<b>{CFG['assistant_label']} :</b> {assistant_name}<br/>"
+                f"<font size='8' color='#475569'>{CFG['assistant_role']}</font>",
+                P,
+            ),
         ]],
         colWidths=[7.9*cm, 8.0*cm]
     )
@@ -1768,19 +1222,6 @@ def build_pdf_observations_report(
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return out.getvalue()
 
-# -----------------------------
-# UI
-# -----------------------------
-
-def sidebar_card(title: str):
-    st.markdown(f'<div class="sidebar-card"><div style="font-weight:950;font-size:14px;margin-bottom:10px;">{title}</div>', unsafe_allow_html=True)
-
-def sidebar_card_end():
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-
-
 with st.sidebar:
     from pathlib import Path
 
@@ -1839,7 +1280,7 @@ with st.sidebar:
 
     if import_mode == "URL (auto)":
         st.caption("Recommandé Streamlit Cloud : lien direct vers un fichier .xlsx")
-        default_url = st.secrets.get(CFG["secrets"]["excel_url"], "")
+        default_url = str(safe_secret(CFG["secrets"]["excel_url"], ""))
         url = st.text_input("URL du fichier Excel (.xlsx)", value=default_url)
 
         if url.strip():
@@ -1950,8 +1391,8 @@ with st.sidebar:
     # =========================================================
     sidebar_card("📩 Rappel DG/DGE (mensuel)")
 
-    dashboard_url = st.secrets.get(CFG["secrets"]["dashboard_url"], "")
-    recips_raw = st.secrets.get(CFG["secrets"]["dg_emails"], "")
+    dashboard_url = str(safe_secret(CFG["secrets"]["dashboard_url"], ""))
+    recips_raw = str(safe_secret(CFG["secrets"]["dg_emails"], ""))
     recipients = [x.strip() for x in recips_raw.split(",") if x.strip()]
 
     today = dt.date.today()
@@ -1962,7 +1403,7 @@ with st.sidebar:
 
     # --- Sécurité admin ---
     pin = st.text_input("Code admin (PIN)", type="password").strip()
-    admin_pin = str(st.secrets.get(CFG["secrets"]["admin_pin"], "")).strip()
+    admin_pin = str(safe_secret(CFG["secrets"]["admin_pin"], "")).strip()
     is_admin = (pin != "" and admin_pin != "" and pin == admin_pin)
 
     # rendre dispo partout (onglets)
@@ -2127,12 +1568,27 @@ with st.sidebar:
         set_lock(month_key)
 
         try:
+            smtp_host = str(safe_secret("SMTP_HOST", "")).strip()
+            smtp_port_raw = str(safe_secret("SMTP_PORT", "")).strip()
+            smtp_user = str(safe_secret("SMTP_USER", "")).strip()
+            smtp_pass = str(safe_secret("SMTP_PASS", "")).strip()
+            smtp_from = str(safe_secret("SMTP_FROM", "")).strip()
+
+            if not all([smtp_host, smtp_port_raw, smtp_user, smtp_pass, smtp_from]):
+                raise RuntimeError(
+                    "Secrets SMTP manquants: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM"
+                )
+            try:
+                smtp_port = int(smtp_port_raw)
+            except ValueError as exc:
+                raise RuntimeError("SMTP_PORT invalide (entier attendu).") from exc
+
             send_email_reminder(
-                smtp_host=st.secrets["SMTP_HOST"],
-                smtp_port=int(st.secrets["SMTP_PORT"]),
-                smtp_user=st.secrets["SMTP_USER"],
-                smtp_pass=st.secrets["SMTP_PASS"],
-                sender=st.secrets["SMTP_FROM"],
+                smtp_host=smtp_host,
+                smtp_port=smtp_port,
+                smtp_user=smtp_user,
+                smtp_pass=smtp_pass,
+                sender=smtp_from,
                 recipients=recipients,
                 subject=subject,
                 body_text=body_text,
@@ -2215,9 +1671,9 @@ unsafe_allow_html=True
 st.markdown(
 f"""
 <div class="footer-signature">
-  <strong>{CFG["author_name"]}</strong> — Chef de Département • ✉️ {CFG["author_email"]}
+  <strong>{CFG["author_name"]}</strong> — {CFG["author_role"]} • ✉️ {CFG["author_email"]}
   <br/>
-  <strong>Assistante :</strong> {CFG["assistant_name"]} • ✉️ {CFG["assistant_email"]}
+  <strong>{CFG["assistant_label"]} :</strong> {CFG["assistant_name"]} • ✉️ {CFG["assistant_email"]}
 </div>
 """,
 unsafe_allow_html=True
@@ -3057,17 +2513,33 @@ with tab_alertes:
                         mois_min=mois_min,
                         mois_max=mois_max,
                         thresholds=thresholds,
-                        gprof=gprof
+                        gprof=gprof,
+                        cfg=CFG,
                     )
 
                     subject_prof = f"{CFG['dept_code']} — Notification ({mois_min}→{mois_max}) : {lot.split(' ',1)[1]} — {len(gprof)} élément(s)"
                     try:
+                        smtp_host = str(safe_secret("SMTP_HOST", "")).strip()
+                        smtp_port_raw = str(safe_secret("SMTP_PORT", "")).strip()
+                        smtp_user = str(safe_secret("SMTP_USER", "")).strip()
+                        smtp_pass = str(safe_secret("SMTP_PASS", "")).strip()
+                        smtp_from = str(safe_secret("SMTP_FROM", "")).strip()
+
+                        if not all([smtp_host, smtp_port_raw, smtp_user, smtp_pass, smtp_from]):
+                            raise RuntimeError(
+                                "Secrets SMTP manquants: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM"
+                            )
+                        try:
+                            smtp_port = int(smtp_port_raw)
+                        except ValueError as exc:
+                            raise RuntimeError("SMTP_PORT invalide (entier attendu).") from exc
+
                         send_email_reminder(
-                            smtp_host=st.secrets["SMTP_HOST"],
-                            smtp_port=int(st.secrets["SMTP_PORT"]),
-                            smtp_user=st.secrets["SMTP_USER"],
-                            smtp_pass=st.secrets["SMTP_PASS"],
-                            sender=st.secrets["SMTP_FROM"],
+                            smtp_host=smtp_host,
+                            smtp_port=smtp_port,
+                            smtp_user=smtp_user,
+                            smtp_pass=smtp_pass,
+                            sender=smtp_from,
                             recipients=[mail],
                             subject=subject_prof,
                             body_text=body_text_prof,
