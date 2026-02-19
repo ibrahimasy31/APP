@@ -101,6 +101,7 @@ st.set_page_config(
     page_title=CFG["page_title"],
     layout="wide",
     page_icon=CFG["page_icon"],
+    initial_sidebar_state="expanded",
 )
 
 
@@ -323,10 +324,21 @@ a:hover{ text-decoration: underline; }
   padding-top: .5rem !important;
   padding-bottom: 4.5rem !important;
 }
-header[data-testid="stHeader"],
-div[data-testid="stToolbar"]{
+header[data-testid="stHeader"]{
   visibility: hidden !important;
   height: 0px !important;
+}
+
+/* Garder la toolbar visible pour conserver le bouton d'ouverture sidebar */
+div[data-testid="stToolbar"]{
+  visibility: visible !important;
+  height: auto !important;
+}
+
+button[data-testid="stSidebarCollapsedControl"]{
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Scrollbar dark */
