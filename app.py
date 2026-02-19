@@ -609,17 +609,239 @@ button[kind="secondary"] *{
   text-decoration: none !important;
 }
 
-/* -----------------------------
-   RESPONSIVE
-------------------------------*/
+/* =========================================================
+   RESPONSIVE — TOUTES TAILLES D'ÉCRAN
+   Breakpoints : 1400 / 1200 / 900 / 700 / 520 / 380 px
+========================================================= */
+
+/* ---- ≤ 1400px : grand écran réduit ---- */
+@media (max-width: 1400px){
+  .kpi-value{ font-size: 24px; }
+  .iaid-htitle{ font-size: 18px; }
+}
+
+/* ---- ≤ 1200px : tablette paysage / laptop compact ---- */
 @media (max-width: 1200px){
-  .kpi-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .kpi-grid{
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 12px;
+  }
+  .kpi-value{ font-size: 22px; }
+  .iaid-htitle{ font-size: 17px; }
+  .iaid-hsub{ font-size: 12px; }
+  .block-container{
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  button[data-baseweb="tab"]{
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
 }
+
+/* ---- ≤ 900px : tablette portrait ---- */
+@media (max-width: 900px){
+  .kpi-grid{
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px;
+  }
+  .kpi{
+    padding: 14px 14px 10px 14px;
+    border-radius: 16px;
+  }
+  .kpi-value{ font-size: 20px; }
+  .kpi-title{ font-size: 10px; }
+
+  .iaid-header{
+    padding: 16px 18px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+  .iaid-htitle{ font-size: 15px; font-weight: 900; }
+  .iaid-hsub{ font-size: 11px; margin-top: 3px; }
+  .iaid-badge{ font-size: 11px; padding: 4px 10px; }
+  .iaid-badges{ gap: 6px; margin-top: 10px; }
+
+  .block-container{
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  button[data-baseweb="tab"]{
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .footer-signature{
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+
+  .sidebar-logo-wrap img{
+    width: 140px;
+  }
+}
+
+/* ---- ≤ 700px : grand smartphone paysage / petite tablette ---- */
 @media (max-width: 700px){
-  .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  html, body, .stApp{ font-size: 15px !important; }
+
+  .kpi-grid{
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .kpi{
+    padding: 12px 12px 10px 12px;
+    border-radius: 14px;
+  }
+  .kpi-value{ font-size: 19px; }
+  .kpi-title{ font-size: 10px; letter-spacing: 0.3px; }
+
+  .iaid-header{
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+  .iaid-htitle{ font-size: 14px; }
+  .iaid-hsub{ font-size: 11px; }
+  .iaid-badges{ gap: 5px; flex-wrap: wrap; }
+  .iaid-badge{ font-size: 10px; padding: 4px 9px; }
+
+  .block-container{
+    padding-left: .75rem !important;
+    padding-right: .75rem !important;
+    padding-bottom: 5rem !important;
+  }
+
+  button[data-baseweb="tab"]{
+    padding: 6px 9px !important;
+    font-size: 11px !important;
+  }
+
+  .stButton button,
+  .stDownloadButton button{
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+  }
+
+  .footer-signature{
+    font-size: 10px;
+    padding: 7px 10px;
+    line-height: 1.4;
+  }
+
+  div[data-testid="stDataFrame"]{
+    border-radius: 12px !important;
+  }
+  .table-wrap{
+    border-radius: 12px;
+  }
+
+  .sidebar-logo-wrap img{
+    width: 120px;
+  }
+  .sidebar-logo-wrap{
+    margin: 12px 0 14px 0;
+  }
+
+  .sidebar-card{
+    padding: 10px;
+    border-radius: 12px;
+  }
 }
+
+/* ---- ≤ 520px : smartphone portrait ---- */
 @media (max-width: 520px){
-  .kpi-grid{ grid-template-columns: 1fr; }
+  html, body, .stApp{ font-size: 14px !important; }
+
+  .kpi-grid{
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .kpi{
+    padding: 10px 10px 8px 10px;
+    border-radius: 12px;
+  }
+  .kpi-value{ font-size: 18px; }
+  .kpi-title{ font-size: 9px; }
+
+  .iaid-header{
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .iaid-htitle{ font-size: 13px; }
+  .iaid-hsub{ font-size: 10px; }
+  .iaid-badge{ font-size: 10px; padding: 3px 8px; }
+  .iaid-badges{ margin-top: 8px; gap: 4px; }
+
+  .block-container{
+    padding-left: .5rem !important;
+    padding-right: .5rem !important;
+    padding-bottom: 5.5rem !important;
+  }
+
+  button[data-baseweb="tab"]{
+    padding: 5px 8px !important;
+    font-size: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .stButton button,
+  .stDownloadButton button{
+    padding: 7px 12px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+  }
+
+  .footer-signature{
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+
+  .badge{ font-size: 10px; padding: 4px 9px; }
+
+  .sidebar-logo-wrap img{
+    width: 100px;
+  }
+  .sidebar-card{
+    padding: 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  h1{ font-size: 18px !important; }
+  h2{ font-size: 16px !important; }
+  h3{ font-size: 14px !important; }
+}
+
+/* ---- ≤ 380px : très petit smartphone ---- */
+@media (max-width: 380px){
+  .kpi-grid{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .kpi-value{ font-size: 22px; }
+  .kpi-title{ font-size: 10px; }
+
+  .iaid-htitle{ font-size: 12px; }
+  .iaid-hsub{ font-size: 9px; }
+
+  .block-container{
+    padding-left: .35rem !important;
+    padding-right: .35rem !important;
+  }
+
+  button[data-baseweb="tab"]{
+    padding: 4px 6px !important;
+    font-size: 9px !important;
+  }
+
+  .footer-signature strong{ display: block; }
 }
 
 /* -----------------------------
