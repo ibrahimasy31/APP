@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import smtplib
 from email.message import EmailMessage
 from pathlib import Path
@@ -11,8 +12,12 @@ import pandas as pd
 
 REMINDER_DIR = Path(".streamlit")
 REMINDER_DIR.mkdir(parents=True, exist_ok=True)
-REMINDER_FILE = REMINDER_DIR / "last_reminder.json"
-LOCK_FILE = REMINDER_DIR / "last_reminder.lock"
+
+# Préfixe par département pour éviter les collisions sur Streamlit Cloud
+# (plusieurs instances dans le même dossier)
+_dept_prefix = os.getenv("APP_DEPT_PROFILE", "IAID").upper()
+REMINDER_FILE = REMINDER_DIR / f"last_reminder_{_dept_prefix}.json"
+LOCK_FILE = REMINDER_DIR / f"last_reminder_{_dept_prefix}.lock"
 
 
 def get_last_reminder_month() -> Optional[str]:

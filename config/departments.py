@@ -52,7 +52,7 @@ DEPARTMENT_PROFILES: Dict[str, Dict[str, object]] = {
         "assistant_label": "Chef de Département",
         "assistant_role": "Support administratif",
         "secrets": {
-            "excel_url": "IAID_EXCEL_URL",
+            "excel_url": "KM_EXCEL_URL",
             "dg_emails": "DG_EMAILS",
             "dashboard_url": "DASHBOARD_URL",
             "admin_pin": "ADMIN_PIN",
@@ -69,7 +69,7 @@ DEPARTMENT_PROFILES: Dict[str, Dict[str, object]] = {
         "assistant_name": "Ndéye Ramatoulaye Diop",
         "assistant_email": "nrdiop@groupeisi.com",
         "secrets": {
-            "excel_url": "IAID_EXCEL_URL",
+            "excel_url": "DRS_EXCEL_URL",
             "dg_emails": "DG_EMAILS",
             "dashboard_url": "DASHBOARD_URL",
             "admin_pin": "ADMIN_PIN",

@@ -11,6 +11,20 @@ import requests
 import streamlit as st
 
 MOIS_COLS = ["Oct", "Nov", "Déc", "Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août"]
+
+
+def normalize_semestre_value(x) -> str:
+    """Normalise une valeur de semestre vers le format 'S1', 'S2', etc."""
+    if pd.isna(x):
+        return ""
+    s = str(x).strip().upper()
+    if s.isdigit():
+        return f"S{int(s)}"
+    s = s.replace("SEMESTRE", "S").replace("SEM", "S")
+    m = re.search(r"S\s*0*([1-9]\d*)", s)
+    if m:
+        return f"S{int(m.group(1))}"
+    return s
 MOIS_ORDER = {m: i for i, m in enumerate(MOIS_COLS, start=1)}
 
 DEFAULT_THRESHOLDS = {

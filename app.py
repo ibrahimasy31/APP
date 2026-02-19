@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import io
 import os
 import re
@@ -69,6 +70,7 @@ from utils.data_pipeline import (
     fetch_headers,
     load_excel_all_sheets,
     make_long,
+    normalize_semestre_value,
 )
 
 # Choix du profil via APP_DEPT_PROFILE: IAID (défaut), KM, DRS
@@ -99,6 +101,32 @@ def safe_secret(key: str, default=""):
         return st.secrets.get(key, default)
     except Exception:
         return default
+
+
+def _get_smtp_config() -> dict:
+    """Lit et valide la configuration SMTP depuis st.secrets. Lève RuntimeError si incomplète."""
+    smtp_host = str(safe_secret("SMTP_HOST", "")).strip()
+    smtp_port_raw = str(safe_secret("SMTP_PORT", "")).strip()
+    smtp_user = str(safe_secret("SMTP_USER", "")).strip()
+    smtp_pass = str(safe_secret("SMTP_PASS", "")).strip()
+    smtp_from = str(safe_secret("SMTP_FROM", "")).strip()
+
+    if not all([smtp_host, smtp_port_raw, smtp_user, smtp_pass, smtp_from]):
+        raise RuntimeError(
+            "Secrets SMTP manquants: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM"
+        )
+    try:
+        smtp_port = int(smtp_port_raw)
+    except ValueError as exc:
+        raise RuntimeError("SMTP_PORT invalide (entier attendu).") from exc
+
+    return {
+        "smtp_host": smtp_host,
+        "smtp_port": smtp_port,
+        "smtp_user": smtp_user,
+        "smtp_pass": smtp_pass,
+        "smtp_from": smtp_from,
+    }
 
 
 # ==============================
@@ -745,7 +773,7 @@ def build_pdf_report(
             img.drawHeight = 2.2*cm
             img.drawWidth  = 2.2*cm
             logo_cell = img
-        except:
+        except Exception:
             logo_cell = ""
 
     header_rows = [
@@ -1022,7 +1050,7 @@ def build_pdf_observations_report(
             img.drawHeight = 2.2*cm
             img.drawWidth  = 2.2*cm
             logo_cell = img
-        except:
+        except Exception:
             logo_cell = ""
 
     header_rows = [[
@@ -1223,8 +1251,6 @@ def build_pdf_observations_report(
     return out.getvalue()
 
 with st.sidebar:
-    from pathlib import Path
-
     LOGO_JPG = Path(CFG["logo_path"])
 
     if LOGO_JPG.exists():
@@ -1297,7 +1323,6 @@ with st.sidebar:
 
                 file_bytes = fetch_excel_if_changed(url.strip(), signature)
                 source_label = f"URL smart ({signature})"
-                import hashlib
                 digest = hashlib.md5(file_bytes).hexdigest()[:10]
                 st.caption(f"📦 URL: {len(file_bytes)/1024:.1f} KB | md5: {digest} | tick={tick}")
 
@@ -1312,7 +1337,6 @@ with st.sidebar:
         uploaded = st.file_uploader("Importer le fichier Excel (.xlsx)", type=["xlsx"])
         if uploaded is not None:
             file_bytes = uploaded.getvalue()
-            import hashlib
             digest = hashlib.md5(file_bytes).hexdigest()[:10]
             st.caption(f"📦 Fichier: {len(file_bytes)/1024:.1f} KB | md5: {digest}")
             source_label = f"Upload: {uploaded.name}"
@@ -1568,32 +1592,18 @@ with st.sidebar:
         set_lock(month_key)
 
         try:
-            smtp_host = str(safe_secret("SMTP_HOST", "")).strip()
-            smtp_port_raw = str(safe_secret("SMTP_PORT", "")).strip()
-            smtp_user = str(safe_secret("SMTP_USER", "")).strip()
-            smtp_pass = str(safe_secret("SMTP_PASS", "")).strip()
-            smtp_from = str(safe_secret("SMTP_FROM", "")).strip()
-
-            if not all([smtp_host, smtp_port_raw, smtp_user, smtp_pass, smtp_from]):
-                raise RuntimeError(
-                    "Secrets SMTP manquants: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM"
-                )
-            try:
-                smtp_port = int(smtp_port_raw)
-            except ValueError as exc:
-                raise RuntimeError("SMTP_PORT invalide (entier attendu).") from exc
-
+            cfg_smtp = _get_smtp_config()
             send_email_reminder(
-                smtp_host=smtp_host,
-                smtp_port=smtp_port,
-                smtp_user=smtp_user,
-                smtp_pass=smtp_pass,
-                sender=smtp_from,
+                smtp_host=cfg_smtp["smtp_host"],
+                smtp_port=cfg_smtp["smtp_port"],
+                smtp_user=cfg_smtp["smtp_user"],
+                smtp_pass=cfg_smtp["smtp_pass"],
+                sender=cfg_smtp["smtp_from"],
                 recipients=recipients,
                 subject=subject,
                 body_text=body_text,
-                body_html=body_html,)
-           
+                body_html=body_html,
+            )
             # 2) marquer envoyé pour le mois
             set_last_reminder_month(month_key)
 
@@ -1730,23 +1740,6 @@ st.sidebar.header("Filtres")
 # -----------------------------
 # Filtre Semestre (robuste)
 # -----------------------------
-def normalize_semestre_value(x) -> str:
-    if pd.isna(x):
-        return ""
-    s = str(x).strip().upper()
-
-    # Cas: "1" / "2"
-    if s.isdigit():
-        return f"S{int(s)}"
-
-    # Cas: "S1", "S01", "SEM1", "Semestre 1"...
-    s = s.replace("SEMESTRE", "S").replace("SEM", "S")
-    m = re.search(r"S\s*0*([1-9]\d*)", s)
-    if m:
-        return f"S{int(m.group(1))}"
-
-    return s
-
 if "Semestre" in df_period.columns:
     df_period["Semestre_norm"] = df_period["Semestre"].apply(normalize_semestre_value)
 else:
@@ -2383,7 +2376,8 @@ with tab_alertes:
         # ---------------------------------------------------------
         # 2) Construire alerts_send (IMPORTANT : base = tmp)
         # ---------------------------------------------------------
-        base = tmp[tmp["Email"] != ""].copy()
+        # Validation basique : garder uniquement les emails qui contiennent "@"
+        base = tmp[tmp["Email"].str.contains("@", na=False)].copy()
 
         cols_keep = [
             "Responsable", "Email", "Classe", "Matière", "Semestre", "Type",
@@ -2519,31 +2513,17 @@ with tab_alertes:
 
                     subject_prof = f"{CFG['dept_code']} — Notification ({mois_min}→{mois_max}) : {lot.split(' ',1)[1]} — {len(gprof)} élément(s)"
                     try:
-                        smtp_host = str(safe_secret("SMTP_HOST", "")).strip()
-                        smtp_port_raw = str(safe_secret("SMTP_PORT", "")).strip()
-                        smtp_user = str(safe_secret("SMTP_USER", "")).strip()
-                        smtp_pass = str(safe_secret("SMTP_PASS", "")).strip()
-                        smtp_from = str(safe_secret("SMTP_FROM", "")).strip()
-
-                        if not all([smtp_host, smtp_port_raw, smtp_user, smtp_pass, smtp_from]):
-                            raise RuntimeError(
-                                "Secrets SMTP manquants: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM"
-                            )
-                        try:
-                            smtp_port = int(smtp_port_raw)
-                        except ValueError as exc:
-                            raise RuntimeError("SMTP_PORT invalide (entier attendu).") from exc
-
+                        cfg_smtp = _get_smtp_config()
                         send_email_reminder(
-                            smtp_host=smtp_host,
-                            smtp_port=smtp_port,
-                            smtp_user=smtp_user,
-                            smtp_pass=smtp_pass,
-                            sender=smtp_from,
+                            smtp_host=cfg_smtp["smtp_host"],
+                            smtp_port=cfg_smtp["smtp_port"],
+                            smtp_user=cfg_smtp["smtp_user"],
+                            smtp_pass=cfg_smtp["smtp_pass"],
+                            sender=cfg_smtp["smtp_from"],
                             recipients=[mail],
                             subject=subject_prof,
                             body_text=body_text_prof,
-                            body_html=body_html_prof
+                            body_html=body_html_prof,
                         )
                         sent += 1
                     except Exception as e:
@@ -2790,32 +2770,5 @@ with tab_export:
         
 
 
-
-    export_df = filtered[
-    ["Classe","Semestre","Matière","Début prévu","Fin prévue","VHP"]
-    + MOIS_COLS
-    + ["VHR","Écart","Taux","Statut_auto","Observations"]
-    ].copy()
-
-
-    export_df["Taux"] = (export_df["Taux"]*100).round(2)
-
-    synth_class = filtered.groupby("Classe").agg(
-        Matieres=("Matière","count"),
-        Taux_moy=("Taux","mean"),
-        VHP_total=("VHP","sum"),
-        VHR_total=("VHR","sum"),
-        Retard_h=("Écart", lambda s: float(s[s<0].sum()))
-    ).reset_index()
-    synth_class["Taux_moy"] = (synth_class["Taux_moy"]*100).round(2)
-
-    xbytes = df_to_excel_bytes({
-        "Consolidé": export_df,
-        "Synthese_Classes": synth_class,
-    })
-
-   
-
-    
 
 st.caption("✅ Astuce : standardise les colonnes sur toutes les feuilles. L’app calcule automatiquement VHR/Écart/Taux/Statut selon la période sélectionnée.")
