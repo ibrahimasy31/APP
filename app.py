@@ -80,10 +80,19 @@ CFG = get_department_config(os.getenv("APP_DEPT_PROFILE", "IAID"))
 _tpl_name = CFG["dept_code"].lower()
 
 pio.templates[_tpl_name] = dict(
-    layout=dict(colorway=CFG["plotly_colorway"])
+    layout=dict(
+        colorway=CFG["plotly_colorway"],
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(17,27,46,0.60)",
+        font=dict(color="#E8EDF5", family="Arial, sans-serif"),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.06)", linecolor="rgba(255,255,255,0.10)"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.06)", linecolor="rgba(255,255,255,0.10)"),
+        title=dict(font=dict(color="#E8EDF5")),
+        legend=dict(bgcolor="rgba(17,27,46,0.70)", bordercolor="rgba(255,255,255,0.08)"),
+    )
 )
 
-pio.templates.default = "plotly_white+" + _tpl_name
+pio.templates.default = "plotly_dark+" + _tpl_name
 
 
 
@@ -235,19 +244,14 @@ Format: Markdown.
 st.markdown(
 """
 <style>
-/* Force un rendu "light" même si le navigateur est en dark mode */
-:root, html, body, .stApp {
-  color-scheme: light !important;
-}
+/* =========================================================
+   IAID — THÈME DARK EXÉCUTIF (INSPIRÉ DASHBOARD FUTURISTE)
+   Navy sombre • Glow effects • Design moderne
+   ========================================================= */
 
-/* Si un navigateur applique prefers-color-scheme: dark, on neutralise */
-@media (prefers-color-scheme: dark) {
-  html, body, .stApp {
-    background: #F6F8FC !important;
-  }
-  body, .stApp, p, span, div, label, h1, h2, h3, h4, h5 {
-    color: #0F172A !important;
-  }
+/* Force dark mode partout */
+:root, html, body, .stApp {
+  color-scheme: dark !important;
 }
 
 html, body, .stApp {
@@ -255,39 +259,38 @@ html, body, .stApp {
   font-size: 16px !important;
 }
 
-
-/* =========================================================
-   IAID — THÈME BLEU EXÉCUTIF DG (FINAL)
-   Lisibilité absolue • Tous navigateurs • Streamlit Cloud
-   ========================================================= */
-
 /* -----------------------------
-   VARIABLES
+   VARIABLES DARK
 ------------------------------*/
 :root{
-  --bg:#F6F8FC;
-  --bg2:#EEF3FA;
-  --card:#FFFFFF;
-  --text:#0F172A;
-  --muted:#475569;
-  --line:#E3E8F0;
+  --bg:       #080E1A;
+  --bg2:      #0D1526;
+  --card:     #111B2E;
+  --card2:    #162035;
+  --text:     #E8EDF5;
+  --muted:    #7A90B8;
+  --line:     rgba(255,255,255,0.07);
 
-  --blue:#0B3D91;
-  --blue2:#134FA8;
-  --blue3:#1F6FEB;
+  --blue:     #1F6FEB;
+  --blue2:    #2A80FF;
+  --blue3:    #5AA2FF;
+  --blue-glow:rgba(31,111,235,0.25);
 
-  --ok:#1E8E3E;
-  --warn:#F29900;
-  --bad:#D93025;
+  --ok:       #00C97A;
+  --ok-glow:  rgba(0,201,122,0.20);
+  --warn:     #FF9500;
+  --warn-glow:rgba(255,149,0,0.20);
+  --bad:      #FF3B3B;
+  --bad-glow: rgba(255,59,59,0.20);
 
-  --focus:#5AA2FF;
+  --focus:    #5AA2FF;
 }
 
 /* -----------------------------
    BACKGROUND & TEXTE GLOBAL
 ------------------------------*/
 html, body, .stApp{
-  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 60%, var(--bg) 100%) !important;
+  background: radial-gradient(ellipse at 10% 0%, #0D1E3A 0%, var(--bg) 60%) !important;
 }
 
 body, .stApp, p, span, div, label{
@@ -297,7 +300,7 @@ body, .stApp, p, span, div, label{
 
 /* Titres */
 h1, h2, h3, h4, h5{
-  color: var(--blue) !important;
+  color: var(--blue3) !important;
   font-weight: 850 !important;
 }
 
@@ -318,7 +321,7 @@ a:hover{ text-decoration: underline; }
    STREAMLIT LAYOUT
 ------------------------------*/
 .block-container{
-  padding-top: .25rem !important;
+  padding-top: .5rem !important;
   padding-bottom: 4.5rem !important;
 }
 header[data-testid="stHeader"],
@@ -327,11 +330,17 @@ div[data-testid="stToolbar"]{
   height: 0px !important;
 }
 
+/* Scrollbar dark */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: rgba(90,162,255,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,162,255,0.45); }
+
 /* -----------------------------
    SIDEBAR
 ------------------------------*/
 section[data-testid="stSidebar"]{
-  background: var(--card) !important;
+  background: var(--bg2) !important;
   border-right: 1px solid var(--line);
 }
 .sidebar-card{
@@ -340,15 +349,9 @@ section[data-testid="stSidebar"]{
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 10px;
-  box-shadow: 0 6px 18px rgba(14,30,37,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.40);
 }
 /* ---- LOGO SIDEBAR ---- */
-.sidebar-logo-wrap{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  margin: 8px 0 14px 0;
-}
 .sidebar-logo-wrap{
   display: flex;
   justify-content: center;
@@ -357,21 +360,21 @@ section[data-testid="stSidebar"]{
 }
 
 .sidebar-logo-wrap img{
-  width: 170px;        /* ⬅️ PLUS GRAND */
+  width: 170px;
   max-width: 100%;
   height: auto;
   border-radius: 18px;
-  border: 1px solid rgba(227,232,240,0.9);
-  background: #FFFFFF;
+  border: 1px solid var(--line);
+  background: var(--card2);
   padding: 8px;
-  box-shadow: 0 14px 32px rgba(14,30,37,0.12);
+  box-shadow: 0 0 30px var(--blue-glow), 0 14px 32px rgba(0,0,0,0.30);
 }
 /* -----------------------------
-   INPUTS (lisibilité ++)
+   INPUTS (dark)
 ------------------------------*/
 div[data-baseweb="input"] > div,
 div[data-baseweb="select"] > div{
-  background: #FFFFFF !important;
+  background: var(--card2) !important;
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
 }
@@ -382,115 +385,170 @@ div[data-baseweb="select"] *{
 }
 
 span[data-baseweb="tag"]{
-  background: #EAF1FF !important;
-  border: 1px solid #CFE0FF !important;
-  color: var(--blue) !important;
+  background: rgba(31,111,235,0.18) !important;
+  border: 1px solid rgba(90,162,255,0.35) !important;
+  color: var(--blue3) !important;
   font-weight: 800 !important;
 }
 
 /* Focus clavier */
 *:focus-visible{
-  outline: 3px solid var(--focus) !important;
+  outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
   border-radius: 10px;
 }
 
 
 /* -----------------------------
-   HEADER DG
+   HEADER DG — FUTURISTE
 ------------------------------*/
 .iaid-header{
-  background: linear-gradient(90deg, var(--blue) 0%, var(--blue2) 50%, var(--blue3) 100%);
+  background: linear-gradient(135deg, #0A1E44 0%, #0F2860 40%, #1A3A80 100%);
+  border: 1px solid rgba(90,162,255,0.20);
   color: #FFFFFF !important;
-  padding: 18px 22px;
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(14,30,37,0.20);
+  padding: 20px 26px;
+  border-radius: 20px;
+  box-shadow:
+    0 0 40px rgba(31,111,235,0.15),
+    0 20px 48px rgba(0,0,0,0.50),
+    inset 0 1px 0 rgba(255,255,255,0.08);
   margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.iaid-header::before{
+  content:"";
+  position:absolute;
+  top:-60px; right:-60px;
+  width:200px; height:200px;
+  background: radial-gradient(circle, rgba(90,162,255,0.15) 0%, transparent 70%);
+  pointer-events:none;
 }
 .iaid-header *{
   color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.40);
 }
-.iaid-htitle{ font-size: 20px; font-weight: 950; }
-.iaid-hsub{ font-size: 13px; opacity: .95; margin-top: 4px; }
+.iaid-htitle{ font-size: 20px; font-weight: 950; letter-spacing: -0.3px; }
+.iaid-hsub{ font-size: 13px; opacity: .80; margin-top: 4px; }
 
 .iaid-badges{
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 .iaid-badge{
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.32);
-  padding: 6px 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 850;
 }
 
 /* -----------------------------
-   KPI CARDS
+   KPI CARDS — FUTURISTES
 ------------------------------*/
 .kpi-grid{
   display: grid;
   grid-template-columns: repeat(5, minmax(0,1fr));
-  gap: 12px;
+  gap: 14px;
+  margin: 14px 0;
 }
 .kpi{
-  background: var(--card);
+  background: linear-gradient(135deg, var(--card) 0%, var(--card2) 100%);
   border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 24px rgba(14,30,37,0.06);
+  border-radius: 20px;
+  padding: 18px 18px 14px 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40);
   position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+.kpi:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+}
+/* Barre colorée en haut */
 .kpi:before{
   content:"";
   position:absolute;
   top:0; left:0;
-  width:100%; height:4px;
+  width:100%; height:3px;
   background: var(--blue);
+  border-radius: 20px 20px 0 0;
+}
+/* Cercle glow en fond */
+.kpi:after{
+  content:"";
+  position:absolute;
+  bottom:-30px; right:-30px;
+  width:90px; height:90px;
+  background: radial-gradient(circle, var(--blue-glow) 0%, transparent 70%);
+  pointer-events:none;
 }
 .kpi-title{
-  font-size: 12px;
-  font-weight: 850;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
   color: var(--muted) !important;
+  margin-bottom: 8px;
 }
 .kpi-value{
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 950;
-  margin-top: 6px;
+  letter-spacing: -0.5px;
+  margin-top: 2px;
+  line-height: 1;
 }
-.kpi-good:before{ background: var(--ok); }
-.kpi-warn:before{ background: var(--warn); }
-.kpi-bad:before{ background: var(--bad); }
+/* Barre verte + glow vert */
+.kpi-good:before{ background: linear-gradient(90deg, var(--ok), #00FFA3); }
+.kpi-good:after { background: radial-gradient(circle, var(--ok-glow) 0%, transparent 70%); }
+.kpi-good .kpi-value{ color: var(--ok) !important; }
+
+/* Barre orange + glow orange */
+.kpi-warn:before{ background: linear-gradient(90deg, var(--warn), #FFD060); }
+.kpi-warn:after { background: radial-gradient(circle, var(--warn-glow) 0%, transparent 70%); }
+.kpi-warn .kpi-value{ color: var(--warn) !important; }
+
+/* Barre rouge + glow rouge */
+.kpi-bad:before{ background: linear-gradient(90deg, var(--bad), #FF7070); }
+.kpi-bad:after { background: radial-gradient(circle, var(--bad-glow) 0%, transparent 70%); }
+.kpi-bad .kpi-value{ color: var(--bad) !important; }
 
 /* -----------------------------
-   TABS
+   TABS — DARK
 ------------------------------*/
 button[data-baseweb="tab"]{
-  background: #FFFFFF !important;
-  color: var(--text) !important;
+  background: var(--card) !important;
+  color: var(--muted) !important;
   border-radius: 999px !important;
-  padding: 10px 14px !important;
-  font-weight: 850 !important;
+  padding: 10px 16px !important;
+  font-weight: 800 !important;
   border: 1px solid var(--line) !important;
+  transition: all 0.15s ease !important;
+}
+button[data-baseweb="tab"]:hover{
+  color: var(--text) !important;
+  border-color: rgba(90,162,255,0.30) !important;
 }
 button[data-baseweb="tab"][aria-selected="true"]{
-  background: #EAF1FF !important;
-  color: var(--blue) !important;
-  border: 1px solid var(--blue) !important;
+  background: rgba(31,111,235,0.18) !important;
+  color: var(--blue3) !important;
+  border: 1px solid rgba(90,162,255,0.40) !important;
+  box-shadow: 0 0 14px var(--blue-glow) !important;
 }
 
 /* -----------------------------
-   DATAFRAMES / TABLES
+   DATAFRAMES / TABLES — DARK
 ------------------------------*/
 div[data-testid="stDataFrame"]{
   background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 16px !important;
   padding: 6px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.30) !important;
 }
 
 .table-wrap{
@@ -498,14 +556,16 @@ div[data-testid="stDataFrame"]{
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow-x: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.30);
 }
 
 /* -----------------------------
-   ALERTES STREAMLIT
+   ALERTES STREAMLIT — DARK
 ------------------------------*/
 div[data-testid="stAlert"]{
-  border-radius: 16px !important;
+  border-radius: 14px !important;
   border: 1px solid var(--line) !important;
+  background: var(--card2) !important;
 }
 div[data-testid="stAlert"] *{
   color: var(--text) !important;
@@ -513,53 +573,38 @@ div[data-testid="stAlert"] *{
 }
 
 /* =========================================================
-   BOUTONS — FIX DÉFINITIF (IMPORTANT)
+   BOUTONS — DARK GLOW
 ========================================================= */
 
-/* Bouton normal */
-.stButton button{
-  background: var(--blue) !important;
+.stButton button,
+.stDownloadButton button,
+button[kind="primary"],
+button[kind="secondary"]{
+  background: linear-gradient(135deg, var(--blue) 0%, #0F4DB5 100%) !important;
+  border: 1px solid rgba(90,162,255,0.30) !important;
   border-radius: 14px !important;
-  border: none !important;
-  padding: 10px 16px !important;
-}
-
-/* Bouton téléchargement */
-.stDownloadButton button{
-  background: var(--blue) !important;
-  border-radius: 14px !important;
-  border: none !important;
-  padding: 10px 16px !important;
-}
-
-/* TEXTE INTERNE — FIX STREAMLIT (span / p / div selon versions) */
-.stButton button span,
-.stButton button p,
-.stButton button div,
-.stDownloadButton button span,
-.stDownloadButton button p,
-.stDownloadButton button div{
+  padding: 10px 18px !important;
   color: #FFFFFF !important;
   font-weight: 900 !important;
+  box-shadow: 0 0 16px var(--blue-glow), 0 4px 16px rgba(0,0,0,0.40) !important;
+  transition: all 0.18s ease !important;
 }
 
-/* Cas où Streamlit applique une classe "primary" */
-button[kind="primary"] span,
-button[kind="primary"] p,
-button[kind="primary"] div{
+.stButton button *,
+.stDownloadButton button *,
+button[kind="primary"] *,
+button[kind="secondary"] *{
   color: #FFFFFF !important;
-  font-weight: 900 !important;
+  fill: #FFFFFF !important;
 }
 
-/* Hover */
 .stButton button:hover,
 .stDownloadButton button:hover{
-  background: var(--blue2) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+  background: linear-gradient(135deg, var(--blue2) 0%, var(--blue) 100%) !important;
+  box-shadow: 0 0 28px rgba(31,111,235,0.45), 0 8px 24px rgba(0,0,0,0.50) !important;
+  transform: translateY(-2px) !important;
 }
 
-/* Sécurité Safari / Firefox */
 .stDownloadButton a{
   text-decoration: none !important;
 }
@@ -568,6 +613,9 @@ button[kind="primary"] div{
    RESPONSIVE
 ------------------------------*/
 @media (max-width: 1200px){
+  .kpi-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+@media (max-width: 700px){
   .kpi-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 520px){
@@ -575,92 +623,86 @@ button[kind="primary"] div{
 }
 
 /* -----------------------------
-   FOOTER SIGNATURE (FIXE)
+   FOOTER SIGNATURE (FIXE) — DARK
 ------------------------------*/
 .footer-signature{
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(255,255,255,0.96);
+  background: rgba(8,14,26,0.94);
   border-top: 1px solid var(--line);
   padding: 10px 18px;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--muted);
   text-align: center;
   z-index: 999;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.40);
 }
 .footer-signature strong{
-  color: var(--text);
+  color: var(--blue3);
   font-weight: 900;
 }
 /* =========================
-   BADGES STATUT (PRO)
+   BADGES STATUT — DARK GLOW
 ========================= */
 .badge{
   display:inline-block;
-  padding: 5px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   font-weight: 900;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
-  border: 1px solid rgba(227,232,240,0.95);
+  letter-spacing: 0.3px;
 }
 .badge-ok{
-  background: rgba(30,142,62,0.12);
-  color: #1E8E3E;
-  border-color: rgba(30,142,62,0.25);
+  background: rgba(0,201,122,0.14);
+  color: var(--ok);
+  border: 1px solid rgba(0,201,122,0.30);
+  box-shadow: 0 0 8px rgba(0,201,122,0.15);
 }
 .badge-warn{
-  background: rgba(242,153,0,0.14);
-  color: #B26A00;
-  border-color: rgba(242,153,0,0.30);
+  background: rgba(255,149,0,0.14);
+  color: var(--warn);
+  border: 1px solid rgba(255,149,0,0.30);
+  box-shadow: 0 0 8px rgba(255,149,0,0.15);
 }
 .badge-bad{
-  background: rgba(217,48,37,0.12);
-  color: #D93025;
-  border-color: rgba(217,48,37,0.25);
+  background: rgba(255,59,59,0.14);
+  color: var(--bad);
+  border: 1px solid rgba(255,59,59,0.30);
+  box-shadow: 0 0 8px rgba(255,59,59,0.15);
 }
 
 /* =========================================================
-   ✅ PATCH BOUTONS STREAMLIT (robuste multi-navigateurs)
-   - force couleur texte + svg + icônes
-   - couvre stButton / stDownloadButton / kind="primary"
+   PATCH BOUTONS — renforcement multi-navigateurs
 ========================================================= */
 
 .stButton > button,
-.stDownloadButton > button,
-button[kind="primary"],
-button[kind="secondary"]{
-  background: var(--blue) !important;
+.stDownloadButton > button{
+  background: linear-gradient(135deg, var(--blue) 0%, #0F4DB5 100%) !important;
   color: #FFFFFF !important;
-  border: none !important;
+  border: 1px solid rgba(90,162,255,0.25) !important;
   border-radius: 14px !important;
-  padding: 10px 16px !important;
+  padding: 10px 18px !important;
   font-weight: 900 !important;
+  box-shadow: 0 0 16px var(--blue-glow) !important;
 }
 
-/* IMPORTANT: Streamlit met souvent le texte dans span/div/p,
-   et les icônes en svg -> on force TOUS les enfants */
 .stButton > button *,
-.stDownloadButton > button *,
-button[kind="primary"] *,
-button[kind="secondary"] *{
+.stDownloadButton > button *{
   color: #FFFFFF !important;
   fill: #FFFFFF !important;
   stroke: #FFFFFF !important;
 }
 
-/* hover */
 .stButton > button:hover,
 .stDownloadButton > button:hover{
-  background: var(--blue2) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(14,30,37,0.14);
+  box-shadow: 0 0 30px rgba(31,111,235,0.50) !important;
+  transform: translateY(-2px) !important;
 }
 
-/* sécurité liens internes download */
 .stDownloadButton a{
   text-decoration: none !important;
 }
@@ -678,21 +720,23 @@ button[kind="secondary"] *{
 .iaid-hleft{
   display:flex;
   align-items:center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
 .iaid-logo{
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 14px;
   display:flex;
   align-items:center;
   justify-content:center;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.30);
+  background: rgba(31,111,235,0.22);
+  border: 1px solid rgba(90,162,255,0.40);
   font-weight: 950;
+  font-size: 13px;
   flex: 0 0 auto;
+  box-shadow: 0 0 16px rgba(31,111,235,0.25);
 }
 
 .iaid-meta{
@@ -700,15 +744,12 @@ button[kind="secondary"] *{
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-
   padding: 0 !important;
   border-radius: 0 !important;
-
   font-weight: 850;
   flex: 0 0 auto;
   min-width: 170px;
 }
-
 
 @media (max-width: 900px){
   .iaid-hrow{

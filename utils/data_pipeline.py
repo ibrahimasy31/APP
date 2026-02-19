@@ -25,6 +25,8 @@ def normalize_semestre_value(x) -> str:
     if m:
         return f"S{int(m.group(1))}"
     return s
+
+
 MOIS_ORDER = {m: i for i, m in enumerate(MOIS_COLS, start=1)}
 
 DEFAULT_THRESHOLDS = {
