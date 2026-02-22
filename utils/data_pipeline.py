@@ -248,6 +248,16 @@ def fetch_excel_if_changed(url: str, etag_or_lm: str) -> bytes:
 @st.cache_data(show_spinner=False)
 def load_excel_all_sheets(file_bytes: bytes) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
     quality_issues: Dict[str, List[str]] = {}
+    # xlsx/xlsm are ZIP archives — they start with the PK magic bytes.
+    # If the URL returned an HTML page (e.g. a Drive sharing link), the bytes
+    # won't match and pandas raises a cryptic ValueError. Fail early instead.
+    if file_bytes[:4] != b"PK\x03\x04":
+        preview = file_bytes[:120].decode("utf-8", errors="replace")
+        raise ValueError(
+            "Le contenu téléchargé n'est pas un fichier Excel valide (.xlsx). "
+            "Vérifiez que l'URL est un lien de téléchargement direct et non une page de partage "
+            f"(Google Drive, OneDrive…). Début reçu : {preview!r}"
+        )
     xls = pd.ExcelFile(io.BytesIO(file_bytes))
     frames = []
 

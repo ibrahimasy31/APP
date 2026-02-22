@@ -1948,7 +1948,11 @@ if file_bytes is None:
 
 st.caption(f"Source active : **{source_label}**")
 
-df, quality = load_excel_all_sheets(file_bytes)
+try:
+    df, quality = load_excel_all_sheets(file_bytes)
+except ValueError as _exc:
+    st.error(f"❌ Fichier Excel invalide : {_exc}")
+    st.stop()
 
 # Auto-refresh uniquement en mode URL
 # if import_mode == "URL (auto)" and auto_refresh:
@@ -2064,6 +2068,11 @@ if show_only_delay:
 # Dataset final (sans Enseignant/Type)
 # -----------------------------
 filtered = filtered_base.copy()
+
+# Colonnes optionnelles absentes de certains fichiers Excel (ex: KM)
+for _col in ["Type", "Semestre", "Responsable", "Email", "Observations", "Début prévu", "Fin prévue"]:
+    if _col not in filtered.columns:
+        filtered[_col] = ""
 
 
 # ✅ Classes réellement disponibles après filtres (important pour l'onglet "Par classe")
