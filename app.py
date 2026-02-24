@@ -997,6 +997,7 @@ button[kind="secondary"] *{
 
 
 
+</style>
 """,
 unsafe_allow_html=True
 )

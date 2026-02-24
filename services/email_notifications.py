@@ -149,7 +149,8 @@ def build_prof_email_html(
 
     return f"""
     <!doctype html>
-    <html>
+    <html lang="fr">
+    <head><meta charset="utf-8"/></head>
     <body style="margin:0;padding:0;background:#0B3D91;">
     <div style="background:linear-gradient(180deg,#0B3D91 0%,#134FA8 100%);padding:34px 12px;">
       <div style="max-width:900px;margin:0 auto;background:#FFFFFF;border-radius:20px;
